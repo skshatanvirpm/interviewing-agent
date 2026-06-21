@@ -1,0 +1,31 @@
+[project]
+name = "interviewing-agent-api"
+version = "0.1.0"
+description = "Backend for the interviewing agent."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115.0",
+  "httpx>=0.28.1",
+  "openai>=1.75.0",
+  "pypdf>=5.4.0",
+  "pydantic-settings>=2.8.1",
+  "python-multipart>=0.0.20",
+  "uvicorn[standard]>=0.34.2"
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.3.5",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/interviewing_agent"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]

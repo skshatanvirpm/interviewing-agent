@@ -1,0 +1,25 @@
+Jordan Lee
+Machine Learning Engineer
+
+SUMMARY
+Machine learning engineer with experience building retrieval, recommendation, and model-evaluation systems.
+
+SKILLS
+Python, PyTorch, FastAPI, PostgreSQL, vector search, experiment design, model monitoring
+
+EXPERIENCE
+Machine Learning Engineer, Example Analytics
+- Built a retrieval pipeline for internal technical documentation.
+- Defined offline retrieval metrics and production latency monitoring.
+- Partnered with product and platform teams on staged releases.
+
+PROJECTS
+Role-Aware Interview Practice System
+- Designed a five-phase interview workflow using resume and job-description context.
+- Implemented question retrieval, structured scoring, and deterministic fallbacks.
+
+Recommendation Experiment Platform
+- Built candidate-ranking experiments with offline evaluation and controlled online rollout plans.
+
+EDUCATION
+BSc, Computer Science

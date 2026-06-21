@@ -1,0 +1,50 @@
+name: ci
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install web dependencies
+        run: npm ci
+
+      - name: Audit high-severity web dependencies
+        run: npm audit --audit-level=high
+
+      - name: Install API dependencies
+        run: uv sync --locked --dev
+        working-directory: apps/api
+
+      - name: Lint web
+        run: npm run lint:web
+
+      - name: Typecheck web
+        run: npm run typecheck:web
+
+      - name: Build web
+        run: npm run build:web
+
+      - name: Test API
+        run: uv run pytest
+        working-directory: apps/api

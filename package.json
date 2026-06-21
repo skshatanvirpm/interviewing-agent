@@ -1,0 +1,16 @@
+{
+  "name": "interviewing-agent",
+  "private": true,
+  "license": "MIT",
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace @interviewing-agent/web",
+    "build:web": "npm run build --workspace @interviewing-agent/web",
+    "lint:web": "npm run lint --workspace @interviewing-agent/web",
+    "typecheck:web": "npm run typecheck --workspace @interviewing-agent/web",
+    "dev:api": "cd apps/api && PYTHONPATH=src uv run uvicorn interviewing_agent.main:app --reload",
+    "test:api": "cd apps/api && uv run pytest"
+  }
+}

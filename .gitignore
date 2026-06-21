@@ -1,0 +1,42 @@
+# Operating system and editor files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Local dependencies and build output
+node_modules/
+.next/
+.next-dev/
+dist/
+build/
+coverage/
+htmlcov/
+*.tsbuildinfo
+
+# Python environments and caches
+.venv/
+apps/api/.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+__pycache__/
+*.py[cod]
+.coverage
+
+# Local runtime configuration
+.env
+.env.*
+!.env.example
+private/
+secretes.md
+
+# Provider and deployment state
+.vercel/
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Reproducible generated data
+apps/api/data/ml_questions.md

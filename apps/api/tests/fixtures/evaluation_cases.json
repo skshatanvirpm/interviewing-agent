@@ -1,0 +1,21 @@
+[
+  {
+    "name": "strong_deep_dive",
+    "phase": "phase_2_deep_dive",
+    "messages": [
+      "The pipeline ingests events, builds feature tables, trains a ranking model, and serves low-latency inference behind a feature store.",
+      "We chose this design because online latency and offline reproducibility were both critical, and we rejected a more complex architecture that would have slowed experimentation.",
+      "In production we monitored latency, drift, and retrieval failures, and we documented the failure modes before launch."
+    ],
+    "expected_min_score": 7.5
+  },
+  {
+    "name": "weak_behavioral",
+    "phase": "phase_5_behavioral",
+    "messages": [
+      "There was some disagreement, but the team handled it.",
+      "We eventually moved on."
+    ],
+    "expected_max_score": 6.2
+  }
+]
