@@ -13,6 +13,7 @@
 - [x] MIT `LICENSE` is included.
 - [x] Git repository is initialized on `main`.
 - [x] GitHub owner `skshatanvirpm`, repository `interviewing-agent`, public visibility, description, and topics are selected.
+- [x] The repository is published and synchronized with `origin/main`.
 
 ## Quality
 
@@ -44,13 +45,11 @@
 - [ ] Hosted end-to-end smoke test passes.
 - [ ] Monitoring, alerting, backup, and rollback procedures are verified.
 
-## GitHub publication inputs
+## GitHub repository
 
-Required from the project owner:
-
-- GitHub account or organization: `skshatanvirpm`;
-- repository name: `interviewing-agent`;
-- visibility: public;
-- project license: MIT;
-- GitHub CLI authentication: complete;
-- optional live-demo URL and hosting details.
+- Repository: [skshatanvirpm/interviewing-agent](https://github.com/skshatanvirpm/interviewing-agent)
+- Default branch: `main`
+- Visibility: public
+- License: MIT
+- Continuous integration: enabled
+- Live demo: pending production hosting selection and configuration
