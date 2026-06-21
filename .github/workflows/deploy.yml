@@ -26,12 +26,12 @@ jobs:
             echo "API deploy hook is not configured; skipping API deployment."
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: ${{ env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != '' }}
 
       - name: Setup Node
         if: ${{ env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != '' }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
