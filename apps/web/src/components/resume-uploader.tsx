@@ -4,7 +4,13 @@ import { ArrowRight, ChevronDown, ChevronUp, FileClock, FileText, History } from
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 
-import { bootstrapInterview, bootstrapInterviewFromParsedResume } from "@/lib/api";
+import {
+  API_ACCESS_TOKEN_REQUIRED,
+  bootstrapInterview,
+  bootstrapInterviewFromParsedResume,
+  getApiAccessToken,
+  setApiAccessToken,
+} from "@/lib/api";
 import type { BootstrapResponse, ParsedResumeHistoryEntry } from "@/lib/types";
 
 const STORAGE_KEY = "interviewing-agent.bootstrap";
@@ -22,8 +28,10 @@ export function ResumeUploader() {
   const [history, setHistory] = useState<ParsedResumeHistoryEntry[]>([]);
   const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(null);
   const [showParsedDetails, setShowParsedDetails] = useState(false);
+  const [accessToken, setAccessToken] = useState("");
 
   useEffect(() => {
+    setAccessToken(getApiAccessToken());
     try {
       const rawHistory = localStorage.getItem(HISTORY_KEY);
       if (rawHistory) {
@@ -85,6 +93,11 @@ export function ResumeUploader() {
   }
 
   async function reuseParsedResume(entry: ParsedResumeHistoryEntry) {
+    if (API_ACCESS_TOKEN_REQUIRED && !accessToken.trim()) {
+      setError("Enter the deployment access token before starting an interview.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setInfo(null);
@@ -116,6 +129,11 @@ export function ResumeUploader() {
     event.preventDefault();
     setError(null);
     setInfo(null);
+
+    if (API_ACCESS_TOKEN_REQUIRED && !accessToken.trim()) {
+      setError("Enter the deployment access token before starting an interview.");
+      return;
+    }
 
     if (!file) {
       setError("Upload a PDF resume to start the interview.");
@@ -197,6 +215,28 @@ export function ResumeUploader() {
         Keep the flow simple: parse once, start the interview, and only expand the parsed details
         if you want to inspect them.
       </p>
+
+      {API_ACCESS_TOKEN_REQUIRED ? (
+        <label className="access-field stack-xs" htmlFor="deployment-access-token">
+          <span className="summary-label">Deployment access token</span>
+          <input
+            autoComplete="off"
+            className="text-input"
+            id="deployment-access-token"
+            onChange={(event) => {
+              setAccessToken(event.target.value);
+              setApiAccessToken(event.target.value);
+              setError(null);
+            }}
+            placeholder="Enter access token"
+            type="password"
+            value={accessToken}
+          />
+          <span className="supporting">
+            The token is kept in this browser tab and sent only to the interview API.
+          </span>
+        </label>
+      ) : null}
 
       {!preview && history.length ? (
         <section className="resume-history stack-md">

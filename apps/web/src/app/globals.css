@@ -252,6 +252,24 @@ textarea {
   display: none;
 }
 
+.access-field {
+  max-width: 560px;
+}
+
+.text-input {
+  width: 100%;
+  border-radius: 16px;
+  padding: 13px 15px;
+  border: 1px solid var(--panel-border);
+  background: rgba(7, 15, 25, 0.72);
+  color: var(--foreground);
+}
+
+.text-input:focus {
+  outline: 2px solid rgba(116, 240, 179, 0.45);
+  outline-offset: 2px;
+}
+
 .summary-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-top: 12px;

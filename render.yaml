@@ -1,0 +1,48 @@
+services:
+  - type: web
+    name: interviewing-agent-api-skshatanvirpm
+    runtime: python
+    repo: https://github.com/skshatanvirpm/interviewing-agent
+    branch: main
+    plan: free
+    region: singapore
+    rootDir: apps/api
+    buildCommand: pip install uv && uv sync --locked --no-dev
+    startCommand: PYTHONPATH=src uv run --no-sync uvicorn interviewing_agent.main:app --host 0.0.0.0 --port $PORT --proxy-headers
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: API_ACCESS_TOKEN
+        sync: false
+      - key: API_RATE_LIMIT_PER_MINUTE
+        value: "30"
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://interviewing-agent-skshatanvirpm.onrender.com
+      - key: CORS_ALLOW_CREDENTIALS
+        value: "true"
+      - key: INTERVIEWER_NAME
+        value: Alex
+      - key: INTERVIEW_TARGET_ROLE
+        value: Machine Learning Engineer
+      - key: INTERVIEW_TARGET_COMPANY
+        value: Example Company
+      - key: LOG_LEVEL
+        value: INFO
+
+  - type: web
+    name: interviewing-agent-skshatanvirpm
+    runtime: static
+    repo: https://github.com/skshatanvirpm/interviewing-agent
+    branch: main
+    buildCommand: npm ci && NEXT_OUTPUT_EXPORT=true npm run build:web
+    staticPublishPath: apps/web/out
+    autoDeployTrigger: commit
+    envVars:
+      - key: NEXT_OUTPUT_EXPORT
+        value: "true"
+      - key: NEXT_PUBLIC_REQUIRE_ACCESS_TOKEN
+        value: "true"
+      - key: NEXT_PUBLIC_API_URL
+        value: https://interviewing-agent-api-skshatanvirpm.onrender.com

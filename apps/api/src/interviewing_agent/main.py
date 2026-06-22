@@ -2,16 +2,18 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from interviewing_agent.config import get_settings
 from interviewing_agent.routes.audio import router as audio_router
+from interviewing_agent.routes.dependencies import require_api_access
 from interviewing_agent.routes.health import router as health_router
 from interviewing_agent.routes.interviews import router as interview_router
 from interviewing_agent.routes.resumes import router as resume_router
 from interviewing_agent.services.audio import AudioService
+from interviewing_agent.services.access_control import SlidingWindowRateLimiter
 from interviewing_agent.services.evaluation import EvaluationService
 from interviewing_agent.services.interview_engine import InterviewEngine, MemorySessionStore
 from interviewing_agent.services.openai_client import OpenAIProvider
@@ -57,6 +59,9 @@ async def handle_unexpected_error(request: Request, exc: Exception) -> JSONRespo
 
 
 app.state.settings = settings
+app.state.api_rate_limiter = SlidingWindowRateLimiter(
+    settings.api_rate_limit_per_minute
+)
 app.state.resume_parser = ResumeParser(settings, openai_provider)
 app.state.interview_engine = InterviewEngine(
     settings,
@@ -69,6 +74,7 @@ app.state.interview_engine = InterviewEngine(
 app.state.audio_service = AudioService(settings, openai_provider)
 
 app.include_router(health_router)
-app.include_router(resume_router)
-app.include_router(interview_router)
-app.include_router(audio_router)
+protected_dependencies = [Depends(require_api_access)]
+app.include_router(resume_router, dependencies=protected_dependencies)
+app.include_router(interview_router, dependencies=protected_dependencies)
+app.include_router(audio_router, dependencies=protected_dependencies)

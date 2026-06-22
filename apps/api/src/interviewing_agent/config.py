@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     interview_target_company: str = "Example Company"
     cors_allowed_origins: str = "http://127.0.0.1:3000,http://localhost:3000"
     cors_allow_credentials: bool = True
+    api_access_token: str | None = None
+    api_rate_limit_per_minute: int = Field(default=0, ge=0)
     log_level: str = "INFO"
     max_resume_upload_bytes: int = Field(default=10 * 1024 * 1024, gt=0)
     max_audio_upload_bytes: int = Field(default=25 * 1024 * 1024, gt=0)

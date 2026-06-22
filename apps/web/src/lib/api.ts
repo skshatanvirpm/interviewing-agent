@@ -9,6 +9,37 @@ import type {
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+const ACCESS_TOKEN_STORAGE_KEY = "interviewing-agent.api-access-token";
+
+export const API_ACCESS_TOKEN_REQUIRED =
+  process.env.NEXT_PUBLIC_REQUIRE_ACCESS_TOKEN === "true";
+
+export function getApiAccessToken(): string {
+  if (typeof window === "undefined") {
+    return "";
+  }
+  return window.sessionStorage.getItem(ACCESS_TOKEN_STORAGE_KEY) ?? "";
+}
+
+export function setApiAccessToken(token: string): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const normalized = token.trim();
+  if (normalized) {
+    window.sessionStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, normalized);
+  } else {
+    window.sessionStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+  }
+}
+
+function authenticatedHeaders(
+  headers: Record<string, string> = {},
+): Record<string, string> {
+  const token = getApiAccessToken();
+  return token ? { ...headers, Authorization: `Bearer ${token}` } : headers;
+}
 
 async function extractErrorMessage(response: Response): Promise<string> {
   const body = await response.text();
@@ -38,6 +69,7 @@ export async function bootstrapInterview(file: File): Promise<BootstrapResponse>
 
   const response = await fetch(`${API_BASE_URL}/sessions/bootstrap`, {
     method: "POST",
+    headers: authenticatedHeaders(),
     body: formData,
   });
 
@@ -52,9 +84,9 @@ export async function bootstrapInterviewFromParsedResume(payload: {
 }): Promise<BootstrapResponse> {
   const response = await fetch(`${API_BASE_URL}/sessions/bootstrap-from-parsed`, {
     method: "POST",
-    headers: {
+    headers: authenticatedHeaders({
       "Content-Type": "application/json",
-    },
+    }),
     body: JSON.stringify(payload),
   });
 
@@ -68,9 +100,9 @@ export async function sendInterviewTurn(
 ): Promise<InterviewTurnResponse> {
   const response = await fetch(`${API_BASE_URL}/interviews/${sessionId}/turn`, {
     method: "POST",
-    headers: {
+    headers: authenticatedHeaders({
       "Content-Type": "application/json",
-    },
+    }),
     body: JSON.stringify({
       candidate_response: candidateResponse,
       metadata,
@@ -85,6 +117,7 @@ export async function getInterviewSession(
 ): Promise<InterviewSession> {
   const response = await fetch(`${API_BASE_URL}/interviews/${sessionId}`, {
     method: "GET",
+    headers: authenticatedHeaders(),
     cache: "no-store",
   });
   return handleResponse<InterviewSession>(response);
@@ -95,9 +128,9 @@ export async function beginInterview(
 ): Promise<InterviewSession> {
   const response = await fetch(`${API_BASE_URL}/interviews/${sessionId}/begin`, {
     method: "POST",
-    headers: {
+    headers: authenticatedHeaders({
       "Content-Type": "application/json",
-    },
+    }),
   });
   return handleResponse<InterviewSession>(response);
 }
@@ -107,9 +140,9 @@ export async function completeInterview(
 ): Promise<InterviewSession> {
   const response = await fetch(`${API_BASE_URL}/interviews/${sessionId}/complete`, {
     method: "POST",
-    headers: {
+    headers: authenticatedHeaders({
       "Content-Type": "application/json",
-    },
+    }),
   });
   return handleResponse<InterviewSession>(response);
 }
@@ -120,6 +153,7 @@ export async function transcribeAudio(file: Blob): Promise<TranscriptResponse> {
 
   const response = await fetch(`${API_BASE_URL}/audio/transcribe`, {
     method: "POST",
+    headers: authenticatedHeaders(),
     body: formData,
   });
 
@@ -129,9 +163,9 @@ export async function transcribeAudio(file: Blob): Promise<TranscriptResponse> {
 export async function speakText(text: string): Promise<Blob> {
   const response = await fetch(`${API_BASE_URL}/audio/speak`, {
     method: "POST",
-    headers: {
+    headers: authenticatedHeaders({
       "Content-Type": "application/json",
-    },
+    }),
     body: JSON.stringify({ text }),
   });
 
