@@ -31,6 +31,7 @@ The test suite covers:
 - environment-only credential behavior and CORS validation;
 - resume/audio upload validation and size limits;
 - safe provider error handling;
+- deployment bearer-token enforcement and global request limiting;
 - audio route contracts through stubs.
 
 ## Browser smoke test
@@ -54,6 +55,29 @@ Camera and microphone paths require explicit browser permissions and should be t
 3. installs locked API and development dependencies;
 4. runs web lint, typecheck, and production build;
 5. runs the API test suite.
+
+`.github/workflows/deploy.yml` runs after pushes to `main`. Render performs the actual auto-deployment; the workflow waits for the hosted update and verifies the public web routes and production CORS policy.
+
+## Hosted smoke tests
+
+Non-secret hosted checks:
+
+```bash
+API_BASE_URL="https://interviewing-agent-api-skshatanvirpm.onrender.com" \
+WEB_ORIGIN="https://interviewing-agent-skshatanvirpm.onrender.com" \
+node scripts/hosted_web_smoke_test.mjs
+```
+
+Protected end-to-end flow:
+
+```bash
+API_BASE_URL="https://interviewing-agent-api-skshatanvirpm.onrender.com" \
+WEB_ORIGIN="https://interviewing-agent-skshatanvirpm.onrender.com" \
+API_ACCESS_TOKEN="..." \
+node scripts/hosted_smoke_test.mjs
+```
+
+The protected script uses only the committed synthetic resume. It verifies access rejection, PDF bootstrap, a model-backed interview turn, interview completion and scoring, and WAV speech generation.
 
 ## Known dependency advisory
 

@@ -7,43 +7,24 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
-  deploy:
+  verify-hosted-services:
     runs-on: ubuntu-latest
-    env:
-      API_DEPLOY_HOOK_URL: ${{ secrets.API_DEPLOY_HOOK_URL }}
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
     steps:
-      - name: Report deployment configuration
-        run: |
-          if [[ -z "${VERCEL_TOKEN}" || -z "${VERCEL_ORG_ID}" || -z "${VERCEL_PROJECT_ID}" ]]; then
-            echo "Vercel deployment is not configured; skipping web deployment."
-          fi
-          if [[ -z "${API_DEPLOY_HOOK_URL}" ]]; then
-            echo "API deploy hook is not configured; skipping API deployment."
-          fi
-
       - uses: actions/checkout@v7
-        if: ${{ env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != '' }}
 
       - name: Setup Node
-        if: ${{ env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != '' }}
         uses: actions/setup-node@v6
         with:
           node-version: 22
-          cache: npm
 
-      - name: Install web dependencies
-        if: ${{ env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != '' }}
-        run: npm ci
+      - name: Wait for Render auto-deploy
+        run: sleep 120
 
-      - name: Deploy web to Vercel
-        if: ${{ env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != '' }}
-        run: npx vercel deploy --prod --token "${VERCEL_TOKEN}"
-
-      - name: Trigger API deploy hook
-        if: ${{ env.API_DEPLOY_HOOK_URL != '' }}
-        run: curl -fsSL -X POST "${API_DEPLOY_HOOK_URL}"
+      - name: Verify hosted web routes and CORS
+        run: node scripts/hosted_web_smoke_test.mjs
+        env:
+          API_BASE_URL: https://interviewing-agent-api-skshatanvirpm.onrender.com
+          WEB_ORIGIN: https://interviewing-agent-skshatanvirpm.onrender.com

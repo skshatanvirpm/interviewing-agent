@@ -30,6 +30,7 @@ The project is a small monorepo with a Next.js client, FastAPI service, Supabase
 | `services/evaluation.py` | Phase evaluation, evidence extraction, final score, and feedback |
 | `services/persistence.py` | Supabase storage and restoration |
 | `services/audio.py` | Transcription and interviewer speech |
+| `services/access_control.py` | Optional deployment bearer-token gate and global request limiting |
 | `components/interview-shell.tsx` | Main interview interaction and client state |
 | `components/review-shell.tsx` | Completed-session review |
 | `components/realtime-listener.tsx` | Browser realtime-assist behavior |
@@ -41,6 +42,8 @@ The project is a small monorepo with a Next.js client, FastAPI service, Supabase
 - Deterministic fallbacks keep the core local flow testable without provider access.
 - Supabase is optional for local exploration and required for durable persistence.
 - Environment variables and root `.env` files are the supported configuration path.
+- The hosted environment requires a deployment access token for resume, interview, and audio routes.
+- Hosted protected requests use a configurable global per-minute limit.
 - Interviewer identity, target role/company, allowed web origins, upload limits, and log level are configurable.
 - Resume uploads require a PDF extension, PDF media type, valid PDF signature, and compliance with the configured size limit.
 - Audio uploads require a supported extension, matching media type, and compliance with the configured size limit.
@@ -63,12 +66,16 @@ The project is a small monorepo with a Next.js client, FastAPI service, Supabase
 - Runtime and development Python dependencies are separated, and clean-clone question-bank tests use the retained JSONL artifact.
 - Maintained architecture, API, configuration, testing, deployment, security, limitations, decision, contribution, and release documents are cross-linked from the README.
 - Four synthetic-data screenshots document the home, parsed-resume, interview, and review states.
+- `render.yaml` defines the live static web and FastAPI services.
+- Hosted smoke scripts verify public routes, CORS, access rejection, PDF bootstrap, interview completion, scoring, and speech generation.
 
 ## Current limitations
 
-- Authentication, rate limiting, RLS policies, and retention/deletion behavior are not implemented.
-- Production allowed origins must be supplied through configuration.
-- The deployment workflow is scaffolding until hosted web and API paths pass an end-to-end smoke test.
+- The shared deployment token is not user authentication or session-level authorization.
+- The global rate limit is in-memory and is not a durable per-user provider-cost quota.
+- RLS policies and retention/deletion behavior are not implemented.
+- The hosted demo does not configure Supabase, so API restarts discard in-memory sessions.
+- Render free hosting can cold-start and does not provide a production SLA.
 
 ## Verification commands
 
@@ -78,3 +85,5 @@ npm run lint:web
 npm run typecheck:web
 npm run build:web
 ```
+
+Hosted verification is documented in `docs/testing.md`.

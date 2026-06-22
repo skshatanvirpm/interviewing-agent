@@ -19,7 +19,17 @@ Completed after the initial audit:
 - fixed clean-clone question-bank behavior by falling back to the retained JSONL artifact,
 - replaced externally derived distributable question text with 25 project-authored questions and regenerated embeddings,
 - upgraded Next.js from 15.5.15 to 15.5.19, removing the high-severity npm advisories,
-- expanded the API suite from 21 to 33 passing tests.
+- expanded the API suite from 21 to 36 passing tests.
+
+## Hosted deployment update — 2026-06-23
+
+- deployed the static Next.js export and FastAPI service on Render;
+- configured exact production CORS and a browser-visible API URL;
+- added a shared deployment bearer-token gate and global protected-request limit;
+- added local tests for access rejection and request limiting;
+- verified synthetic PDF parsing, session bootstrap, one model-backed turn, completion scoring, and speech generation in the hosted API;
+- verified hosted home, interview, review, and CORS behavior;
+- retained Supabase persistence, user authentication, RLS, retention, and operational monitoring as production-hardening work.
 
 The npm audit still reports two moderate findings because Next.js pins PostCSS 8.4.31 as a private build dependency. The upstream project states that this path runs at build time and is relevant when processing untrusted CSS; this project does not process user-supplied CSS. Track the [upstream issue](https://github.com/vercel/next.js/issues/93234) rather than applying npm's suggested breaking downgrade.
 
@@ -48,9 +58,11 @@ The current implementation is functional as a local project. The main gaps are p
 
 ### 2. Protect costly and sensitive API operations
 
-Resume parsing, interview generation, transcription, and speech endpoints have no authentication, authorization, rate limiting, or usage quotas. A public deployment could expose personal data and generate uncontrolled provider costs.
+**Status: partially completed for the hosted demonstration.**
 
-**Required outcome:** define the access model, enforce request identity, add rate limits, and establish usage ceilings.
+Resume parsing, interview generation, transcription, and speech routes require a shared deployment bearer token when configured. A global in-memory request limit reduces uncontrolled provider usage.
+
+**Remaining outcome:** replace the shared token with user identity, enforce session-level authorization, and add durable per-user limits and provider-cost ceilings.
 
 ### 3. Enable database access controls
 
@@ -66,9 +78,9 @@ Uploaded resumes and parsed candidate information are persisted without a docume
 
 ### 5. Complete production deployment configuration
 
-The API CORS policy is now configurable, but the deployment workflow still contains provider integration points rather than evidence that the web app, API, environment variables, database, and health checks work together in a hosted environment.
+**Status: completed for the bounded hosted demonstration.**
 
-**Required outcome:** deployed API verification, production environment validation, production origin configuration, and an end-to-end hosted smoke test.
+The Render web and API services are live with exact production-origin configuration. Hosted web, CORS, access control, synthetic PDF bootstrap, model response, completion, scoring, and speech checks pass. Durable Supabase persistence and the controls in findings 2–4 remain required for production use.
 
 ## Priority 1 — reliability and maintainability
 

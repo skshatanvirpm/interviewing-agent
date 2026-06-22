@@ -16,8 +16,11 @@
 - In-memory session caching is not concurrency-safe across multiple API workers.
 - Supabase persistence uses direct REST calls and a privileged server key.
 - The schema is maintained as one idempotent SQL file rather than versioned migrations.
-- Authentication, authorization, rate limiting, RLS, retention, and deletion APIs are not implemented.
-- Production deployment has not been verified against a hosted environment.
+- The hosted access token is a shared demonstration gate, not user authentication or session-level authorization.
+- The global request limiter is in-memory and does not provide per-user quotas or durable cost accounting.
+- RLS, retention, and deletion APIs are not implemented.
+- The hosted Render environment does not configure Supabase, so sessions are lost when the API restarts or spins down.
+- Render free services can cold-start after inactivity and do not provide a production SLA.
 - Provider latency, cost, fallback rate, and evaluation quality are not centrally monitored.
 - Some PDF layouts may extract poorly in the local fallback path.
 
@@ -33,4 +36,4 @@
 
 - The project is released under the MIT License; third-party components retain their own licenses.
 - Two moderate npm findings remain because Next.js pins a build-time PostCSS version. No high or critical findings remain.
-- A live demo URL and hosted deployment evidence are not yet available.
+- A hosted project demonstration is available, but production persistence, privacy controls, and operational monitoring remain incomplete.

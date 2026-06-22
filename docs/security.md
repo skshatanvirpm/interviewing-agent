@@ -10,6 +10,9 @@
 - Provider exceptions are logged server-side and sanitized for clients.
 - Private local files and environment files are excluded from version control.
 - CI fails on high or critical npm advisories.
+- Hosted resume, interview, and audio routes require a deployment bearer token.
+- The browser keeps that token in `sessionStorage`; it is not embedded in public build output.
+- Hosted protected requests use a configurable global per-minute limit.
 
 ## Data handled
 
@@ -27,9 +30,9 @@ This information can be personal and should be treated as sensitive.
 
 ### Access control
 
-- Authenticate users or issue bounded anonymous session tokens.
+- Replace the shared deployment token with user authentication or bounded anonymous session tokens.
 - Authorize every session read/write operation.
-- Add rate limits and provider-cost quotas.
+- Add per-user rate limits, durable counters, and provider-cost quotas.
 - Prevent session enumeration and cross-user access.
 
 ### Supabase

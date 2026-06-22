@@ -38,11 +38,12 @@
 
 - [ ] Authentication and session authorization are implemented.
 - [ ] Rate limits and provider-cost quotas are implemented.
+- [x] Shared hosted access token and global request limit are configured.
 - [ ] Supabase RLS policies are enabled and tested.
 - [ ] Resume retention, deletion, and export behavior are implemented.
-- [ ] Production hosting providers are selected.
+- [x] Hosting provider and free demonstration services are selected.
 - [ ] Production environment variables are configured.
-- [ ] Hosted end-to-end smoke test passes.
+- [x] Hosted protected API and web/CORS smoke tests pass.
 - [ ] Monitoring, alerting, backup, and rollback procedures are verified.
 
 ## GitHub repository
@@ -52,4 +53,5 @@
 - Visibility: public
 - License: MIT
 - Continuous integration: enabled
-- Live demo: pending production hosting selection and configuration
+- Live application: [interviewing-agent-skshatanvirpm.onrender.com](https://interviewing-agent-skshatanvirpm.onrender.com)
+- API health: [interviewing-agent-api-skshatanvirpm.onrender.com/health](https://interviewing-agent-api-skshatanvirpm.onrender.com/health)

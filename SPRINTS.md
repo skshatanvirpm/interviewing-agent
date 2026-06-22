@@ -54,11 +54,10 @@ This project is being tracked in version-based sprints. Each version groups work
 
 ## v0.5 Expansion Modes and Delivery
 
-- Status: Partially completed
+- Status: Completed
 - Objective: Expand the MVP with optional interaction modes, deployment scaffolding, and lightweight integrity telemetry.
 - Included task IDs: `IA-801`, `IA-802`, `IA-803`, `IA-804`
-- Completed: `IA-801`, `IA-802`, `IA-804`
-- In progress: `IA-803`
+- Completed: `IA-801`, `IA-802`, `IA-803`, `IA-804`
 - Exit criteria:
   - browser realtime-assist mode exists with interruption handling,
   - optional camera preview exists without video analysis,
@@ -71,7 +70,7 @@ This project is being tracked in version-based sprints. Each version groups work
 - Status: In progress
 - Objective: Make the project structurally clear, safe to version, and ready for production-hardening work.
 - Included task IDs: `IA-702`, `IA-803`, `IA-805`, `IA-806`, `IA-807`, `IA-808`, `IA-903`, `IA-904`
-- Completed: `IA-702`, `IA-805`, `IA-806`, `IA-807`, `IA-808`, `IA-904`
+- Completed: `IA-702`, `IA-803`, `IA-805`, `IA-806`, `IA-807`, `IA-808`, `IA-904`
 - Exit criteria:
   - private and generated files cannot enter version control accidentally,
   - maintained documents agree with implemented behavior,

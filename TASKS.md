@@ -20,7 +20,7 @@
 2. `done` — IA-806 Complete the repository and codebase audit.
 3. `done` — IA-702 Remove the legacy markdown-secret runtime path.
 4. `done` — IA-807 Harden configuration, uploads, and provider error handling.
-5. `in_progress` — IA-803 Validate CI/CD and hosted deployment.
+5. `done` — IA-803 Validate CI/CD and hosted deployment.
 6. `todo` — IA-903 Add production security and privacy controls.
 7. `done` — IA-904 Complete the maintained project documentation suite.
 8. `done` — IA-808 Replace externally derived question data with project-authored content.
@@ -103,7 +103,7 @@
 | --- | --- | --- | --- | --- | --- |
 | IA-801 | done | Full-stack | IA-603 | Add browser realtime-assist mode | Browser speech recognition, speech playback, and interruption handling provide an optional lower-friction interaction mode. |
 | IA-802 | done | Frontend | IA-503 | Add optional camera preview | Candidate can enable a local camera preview without facial or behavioral analysis. |
-| IA-803 | in_progress | Infra | IA-703 | Add CI/CD and validate deployment | CI passes automatically; web and API deployment paths are configured and verified with a hosted smoke test. |
+| IA-803 | done | Infra | IA-703 | Add CI/CD and validate deployment | CI passes automatically; Render hosts the static web app and FastAPI service; protected API, model, audio, web-route, and CORS smoke tests pass. |
 | IA-804 | done | Risk / Product | IA-703 | Add lightweight integrity telemetry | Tab switches, focus loss, paste events, camera consent, and retry signals are recorded and surfaced without claiming identity verification. |
 | IA-805 | done | PM / Full-stack | IA-703 | Organize repository files and documents | Historical, example, private, generated, and maintained project files have clear locations and ignore rules. |
 | IA-806 | done | PM / Full-stack | IA-805 | Audit the repository and codebase | `docs/audits/codebase-audit.md` records evidence, risks, priorities, and the recommended execution order. |

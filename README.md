@@ -2,6 +2,10 @@
 
 Interviewing Agent is an audio-first mock interview system for Machine Learning, GenAI, and adjacent engineering roles. It uses a candidate resume and target job description to run a structured interview, probe technical depth, retrieve factual questions, and generate evidence-based feedback.
 
+Live application: [interviewing-agent-skshatanvirpm.onrender.com](https://interviewing-agent-skshatanvirpm.onrender.com)
+
+The hosted interface requires a deployment access token. The token is not embedded in the site or repository.
+
 ![Interviewing Agent home screen](docs/assets/screenshots/home.png)
 
 ## Current capabilities
@@ -16,6 +20,7 @@ Interviewing Agent is an audio-first mock interview system for Machine Learning,
 - Supabase persistence for resumes, sessions, transcripts, and evaluations
 - Optional camera preview, browser integrity signals, and realtime-assist mode
 - API tests and web lint, typecheck, build, and CI workflows
+- Protected Render deployment with hosted route, CORS, API, and provider smoke tests
 
 The realtime-assist feature is browser-assisted interaction, not a full duplex model-streaming implementation. Camera support is a local preview and consent signal; the application does not perform facial or behavioral video analysis.
 
@@ -69,6 +74,7 @@ Operational settings include:
 
 - `INTERVIEWER_NAME`, `INTERVIEW_TARGET_ROLE`, and `INTERVIEW_TARGET_COMPANY`
 - `CORS_ALLOWED_ORIGINS`
+- `API_ACCESS_TOKEN` and `API_RATE_LIMIT_PER_MINUTE`
 - `MAX_RESUME_UPLOAD_BYTES` and `MAX_AUDIO_UPLOAD_BYTES`
 - `LOG_LEVEL`
 
@@ -110,6 +116,8 @@ npm run typecheck:web
 npm run build:web
 ```
 
+Hosted verification commands are documented in [Testing](docs/testing.md).
+
 ## Project documents
 
 - [Product requirements](PRD.md)
@@ -141,4 +149,9 @@ Released under the [MIT License](LICENSE). See [ADR-006](docs/decisions/README.m
 
 ## Deployment status
 
-Continuous integration is configured. The deployment workflow contains Vercel and API deploy-hook integration points, but production credentials, hosted API configuration, CORS policy, database security, and operational controls must be completed before a production release.
+The static web application and FastAPI service are deployed on Render:
+
+- Web: [interviewing-agent-skshatanvirpm.onrender.com](https://interviewing-agent-skshatanvirpm.onrender.com)
+- API health: [interviewing-agent-api-skshatanvirpm.onrender.com/health](https://interviewing-agent-api-skshatanvirpm.onrender.com/health)
+
+Render automatically deploys changes from `main`, and GitHub Actions verifies the hosted web routes and CORS policy. The hosted environment uses an API access token and global request limit. Supabase persistence and the remaining production security/privacy controls are not configured, so the hosted instance is a bounded project demonstration rather than a production service.

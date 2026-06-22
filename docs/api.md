@@ -5,9 +5,12 @@ The FastAPI service exposes JSON and multipart endpoints. Interactive OpenAPI do
 ## General behavior
 
 - Default local base URL: `http://127.0.0.1:8000`
+- Hosted base URL: `https://interviewing-agent-api-skshatanvirpm.onrender.com`
 - Errors use `{ "detail": "message" }`.
 - Unexpected provider errors return stable client messages and are logged server-side.
-- No authentication is currently enforced.
+- `/health` and the OpenAPI documentation are public.
+- All resume, interview, and audio routes require `Authorization: Bearer <token>` when `API_ACCESS_TOKEN` is configured.
+- Protected routes return `401` for an invalid token and `429` when the configured global request limit is reached.
 
 ## Endpoints
 
@@ -44,6 +47,7 @@ Example:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/sessions/bootstrap \
+  -H "Authorization: Bearer $API_ACCESS_TOKEN" \
   -F "resume=@docs/examples/sample-resume.pdf;type=application/pdf"
 ```
 
@@ -76,6 +80,7 @@ The response contains:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/interviews/SESSION_ID/turn \
+  -H "Authorization: Bearer $API_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "candidate_response": "I built a retrieval pipeline and owned its evaluation.",
@@ -99,6 +104,7 @@ Accepted extensions include `.flac`, `.m4a`, `.mp3`, `.mp4`, `.oga`, `.ogg`, `.w
 
 ```bash
 curl -X POST http://127.0.0.1:8000/audio/transcribe \
+  -H "Authorization: Bearer $API_ACCESS_TOKEN" \
   -F "audio=@answer.webm;type=audio/webm"
 ```
 
@@ -106,6 +112,7 @@ curl -X POST http://127.0.0.1:8000/audio/transcribe \
 
 ```bash
 curl -X POST http://127.0.0.1:8000/audio/speak \
+  -H "Authorization: Bearer $API_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"text":"Tell me about your strongest machine learning project."}' \
   --output interviewer.wav

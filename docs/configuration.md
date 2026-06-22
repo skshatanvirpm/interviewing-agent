@@ -7,6 +7,8 @@ The API reads process environment variables plus `.env` and `.env.local` files a
 | Variable | Required | Default | Purpose |
 | --- | --- | --- | --- |
 | `NEXT_PUBLIC_API_URL` | Web deployment | `http://127.0.0.1:8000` | Browser-visible API base URL |
+| `NEXT_PUBLIC_REQUIRE_ACCESS_TOKEN` | Hosted demo | `false` | Show and enforce the browser access-token input |
+| `NEXT_OUTPUT_EXPORT` | Static hosting | `false` | Export the Next.js application as static files |
 | `OPENAI_API_KEY` | Model/audio features | empty | Server-side OpenAI credential |
 | `OPENAI_INTERVIEW_MODEL` | No | `gpt-5.4` | Interview orchestration model |
 | `OPENAI_RESUME_PARSE_MODEL` | No | `gpt-4o` | Resume parsing and fallback-question model |
@@ -19,6 +21,8 @@ The API reads process environment variables plus `.env` and `.env.local` files a
 | `INTERVIEW_TARGET_COMPANY` | No | `Example Company` | Company-alignment context |
 | `CORS_ALLOWED_ORIGINS` | Production | local origins | Comma-separated allowed browser origins |
 | `CORS_ALLOW_CREDENTIALS` | No | `true` | CORS credential behavior |
+| `API_ACCESS_TOKEN` | Hosted demo | empty | Server-side bearer token for protected API routes |
+| `API_RATE_LIMIT_PER_MINUTE` | Hosted demo | `0` | Global protected-request limit; zero disables limiting |
 | `MAX_RESUME_UPLOAD_BYTES` | No | `10485760` | Resume upload limit |
 | `MAX_AUDIO_UPLOAD_BYTES` | No | `26214400` | Audio upload limit |
 | `LOG_LEVEL` | No | `INFO` | Python log level |
@@ -37,8 +41,11 @@ The core deterministic interview flow works without provider credentials. Transc
 ## Production rules
 
 - Set `NEXT_PUBLIC_API_URL` before building the web application.
+- Set `NEXT_PUBLIC_REQUIRE_ACCESS_TOKEN=true` for a protected hosted build.
 - Set `CORS_ALLOWED_ORIGINS` to exact HTTPS web origins.
 - Do not combine wildcard CORS origins with credentials.
+- Store `API_ACCESS_TOKEN` only in the API host's secret manager and distribute it separately from the public site.
+- Set a nonzero `API_RATE_LIMIT_PER_MINUTE` whenever provider-backed routes are internet accessible.
 - Store service credentials in the hosting provider's secret manager.
 - Never expose `SUPABASE_SERVICE_ROLE_KEY` through a `NEXT_PUBLIC_` variable.
 - Use separate provider projects and credentials for development and production.
