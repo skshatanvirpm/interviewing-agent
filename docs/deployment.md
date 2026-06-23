@@ -37,7 +37,7 @@ The Blueprint defines:
 - the exact production web origin for API CORS;
 - a browser-visible API base URL;
 - required secret placeholders for `OPENAI_API_KEY` and `API_ACCESS_TOKEN`;
-- a global API request limit.
+- a per-client API request limit.
 
 Secret values must be configured in Render. They must never be added to `render.yaml` or GitHub.
 
@@ -54,7 +54,7 @@ The hosted build also sets:
 - `NEXT_PUBLIC_API_URL=https://interviewing-agent-api-skshatanvirpm.onrender.com`
 - `NEXT_PUBLIC_REQUIRE_ACCESS_TOKEN=true`
 
-The access token value is entered at runtime and stored only in browser `sessionStorage`. It is not a `NEXT_PUBLIC_` build variable.
+The deployment access token value is entered at runtime and stored only in browser `sessionStorage`. It is not a `NEXT_PUBLIC_` build variable. Interview bootstrap responses also issue a per-session token that is sent as `X-Interview-Session-Token` for session state routes.
 
 ## API runtime
 
@@ -70,6 +70,8 @@ The hosted API requires:
 - `OPENAI_API_KEY`
 - `API_ACCESS_TOKEN`
 - `API_RATE_LIMIT_PER_MINUTE`
+- `INTERVIEW_DATA_RETENTION_DAYS`
+- `INTERVIEW_RETENTION_CLEANUP_ENABLED`
 - exact `CORS_ALLOWED_ORIGINS`
 
 Supabase variables are additionally required for durable persistence.
@@ -97,7 +99,7 @@ The protected smoke test verifies:
 
 1. health and provider configuration;
 2. anonymous request rejection;
-3. synthetic PDF parsing and session bootstrap;
+3. synthetic PDF parsing, session bootstrap, and session-token issuance;
 4. one model-backed interview turn;
 5. interview completion, scoring, and feedback;
 6. WAV speech generation.
@@ -107,15 +109,15 @@ The protected smoke test verifies:
 - The API may spin down after inactivity and take longer on the next request.
 - In-memory sessions are lost when the API restarts.
 - Free hosting is suitable for project demonstration and testing, not a production SLA.
-- Provider usage still consumes OpenAI credits; the access token and request limit reduce unintended use.
+- Provider usage still consumes OpenAI credits; the deployment access token, session tokens, and request limit reduce unintended use.
 
 ## Database setup
 
-Apply `supabase/schema.sql` to the target project. Before enabling durable public use, add and verify:
+Apply `supabase/schema.sql` to the target project. It defines the product tables, token-hash column, private-storage policy, RLS enablement, and service-role-only table policies. Before enabling durable public use, verify:
 
-- Row Level Security policies;
+- Row Level Security behavior with non-privileged credentials;
 - backup and recovery configuration;
-- storage lifecycle and deletion behavior;
+- storage lifecycle and deletion behavior in the target project;
 - migration management;
 - least-privilege service access.
 

@@ -18,6 +18,11 @@ from interviewing_agent.models import (
     TurnMetadata,
 )
 from interviewing_agent.prompts import background_question, opening_question, turn_prompt
+from interviewing_agent.services.access_control import (
+    generate_session_access_token,
+    hash_session_access_token,
+    verify_session_access_token,
+)
 from interviewing_agent.services.evaluation import EvaluationService
 from interviewing_agent.services.openai_client import OpenAIProvider
 from interviewing_agent.services.persistence import SupabasePersistenceService
@@ -96,6 +101,19 @@ class MemorySessionStore:
             raise HTTPException(status_code=404, detail="Interview session not found.")
         return self.sessions[session_id]
 
+    def delete_session_data(self, session: InterviewSession) -> None:
+        if session.candidate_id:
+            session_ids = [
+                session_id
+                for session_id, stored_session in self.sessions.items()
+                if stored_session.candidate_id == session.candidate_id
+            ]
+        else:
+            session_ids = [session.id]
+
+        for session_id in session_ids:
+            self.sessions.pop(session_id, None)
+
 
 @dataclass(frozen=True)
 class CandidateSignals:
@@ -141,6 +159,7 @@ class InterviewEngine:
         candidate_id: str | None = None,
         resume_id: str | None = None,
     ) -> BootstrapResponse:
+        session_access_token = generate_session_access_token()
         opening = InterviewMessage(
             role="interviewer",
             phase=InterviewPhase.PHASE_1_INTRO,
@@ -151,6 +170,7 @@ class InterviewEngine:
             ),
         )
         session = InterviewSession(
+            session_access_token_hash=hash_session_access_token(session_access_token),
             target_company=self.settings.interview_target_company,
             target_role=self.settings.interview_target_role,
             resume=resume,
@@ -161,7 +181,11 @@ class InterviewEngine:
         self.session_store.save(session)
         if self.persistence_service is not None:
             self.persistence_service.persist_bootstrap(session, resume_filename, resume_content)
-        return BootstrapResponse(resume=resume, session=session)
+        return BootstrapResponse(
+            resume=resume,
+            session=session,
+            session_access_token=session_access_token,
+        )
 
     def begin_intro(self, session_id: str) -> InterviewSession:
         session = self.get_session(session_id)
@@ -201,6 +225,19 @@ class InterviewEngine:
                     self.session_store.save(restored)
                     return restored
             raise
+
+    def verify_session_access(self, session_id: str, supplied_token: str) -> bool:
+        session = self.get_session(session_id)
+        return verify_session_access_token(
+            supplied_token,
+            session.session_access_token_hash,
+        )
+
+    def delete_session_data(self, session_id: str) -> None:
+        session = self.get_session(session_id)
+        if self.persistence_service is not None:
+            self.persistence_service.delete_session_data(session_id)
+        self.session_store.delete_session_data(session)
 
     def complete_session(self, session_id: str) -> InterviewSession:
         session = self.get_session(session_id)

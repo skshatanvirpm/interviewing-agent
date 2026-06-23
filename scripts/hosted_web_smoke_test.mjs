@@ -27,7 +27,8 @@ const preflight = await fetch(`${apiBaseUrl}/sessions/bootstrap`, {
   method: "OPTIONS",
   headers: {
     Origin: webOrigin,
-    "Access-Control-Request-Headers": "authorization,content-type",
+    "Access-Control-Request-Headers":
+      "authorization,content-type,x-interview-session-token",
     "Access-Control-Request-Method": "POST",
   },
 });

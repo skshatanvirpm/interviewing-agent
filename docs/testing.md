@@ -31,7 +31,7 @@ The test suite covers:
 - environment-only credential behavior and CORS validation;
 - resume/audio upload validation and size limits;
 - safe provider error handling;
-- deployment bearer-token enforcement and global request limiting;
+- deployment bearer-token enforcement, session-token authorization, deletion, retention cleanup, and per-client request limiting;
 - audio route contracts through stubs.
 
 ## Browser smoke test
@@ -77,7 +77,7 @@ API_ACCESS_TOKEN="..." \
 node scripts/hosted_smoke_test.mjs
 ```
 
-The protected script uses only the committed synthetic resume. It verifies access rejection, PDF bootstrap, a model-backed interview turn, interview completion and scoring, and WAV speech generation.
+The protected script uses only the committed synthetic resume. It verifies access rejection, PDF bootstrap with session-token issuance, a model-backed interview turn, interview completion and scoring, and WAV speech generation.
 
 ## Known dependency advisory
 

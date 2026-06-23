@@ -14,7 +14,7 @@ The project is a small monorepo with a Next.js client, FastAPI service, Supabase
 
 1. The candidate uploads a PDF or reuses a previously parsed local snapshot.
 2. The API parses and normalizes the resume.
-3. The interview engine creates a session and begins the introduction phase.
+3. The interview engine creates a session, issues a session token, and begins the introduction phase.
 4. Candidate turns are captured as text, recorded audio, or optional browser realtime input.
 5. The engine advances through project depth, secondary experience, factual ML, and behavioral phases.
 6. Session state, messages, evaluations, and feedback are persisted when Supabase is configured.
@@ -28,11 +28,11 @@ The project is a small monorepo with a Next.js client, FastAPI service, Supabase
 | `services/resume_parser.py` | OpenAI PDF parsing, local extraction fallback, normalization, and domain inference |
 | `services/question_bank.py` | Question parsing, embedding metadata, ranking, and duplicate avoidance |
 | `services/evaluation.py` | Phase evaluation, evidence extraction, final score, and feedback |
-| `services/persistence.py` | Supabase storage and restoration |
+| `services/persistence.py` | Supabase storage, restoration, deletion, and retention cleanup |
 | `services/audio.py` | Transcription and interviewer speech |
-| `services/access_control.py` | Optional deployment bearer-token gate and global request limiting |
+| `services/access_control.py` | Deployment bearer-token gate, per-client request limiting, and session-token hashing |
 | `components/interview-shell.tsx` | Main interview interaction and client state |
-| `components/review-shell.tsx` | Completed-session review |
+| `components/review-shell.tsx` | Completed-session review and session deletion action |
 | `components/realtime-listener.tsx` | Browser realtime-assist behavior |
 | `components/video-preview.tsx` | Optional local camera preview |
 
@@ -43,12 +43,16 @@ The project is a small monorepo with a Next.js client, FastAPI service, Supabase
 - Supabase is optional for local exploration and required for durable persistence.
 - Environment variables and root `.env` files are the supported configuration path.
 - The hosted environment requires a deployment access token for resume, interview, and audio routes.
-- Hosted protected requests use a configurable global per-minute limit.
+- Bootstrap responses issue a per-session token; interview state routes require that token.
+- Hosted protected requests use a configurable per-client per-minute limit.
 - Interviewer identity, target role/company, allowed web origins, upload limits, and log level are configurable.
 - Resume uploads require a PDF extension, PDF media type, valid PDF signature, and compliance with the configured size limit.
 - Audio uploads require a supported extension, matching media type, and compliance with the configured size limit.
 - Provider exceptions are logged server-side while clients receive stable, non-sensitive errors.
 - Sessions are cached in memory and can be restored from Supabase.
+- Session data can be deleted through the review flow or the `DELETE /interviews/{session_id}` API route.
+- Supabase retention cleanup can delete persisted records older than the configured retention window at API startup.
+- The Supabase schema enables RLS and service-role-only policies for product tables and private resume storage.
 - Browser integrity telemetry records events such as focus loss, tab changes, paste activity, retries, and camera consent.
 - Camera preview does not analyze facial expressions, identity, or behavior.
 - Realtime assist is browser based and is not full duplex model streaming.
@@ -71,9 +75,11 @@ The project is a small monorepo with a Next.js client, FastAPI service, Supabase
 
 ## Current limitations
 
-- The shared deployment token is not user authentication or session-level authorization.
-- The global rate limit is in-memory and is not a durable per-user provider-cost quota.
-- RLS policies and retention/deletion behavior are not implemented.
+- The shared deployment token is not full user-account authentication.
+- Session authorization uses bounded anonymous session tokens rather than named user accounts.
+- The per-client rate limit is in-memory and is not a durable per-user provider-cost quota.
+- RLS policies are defined in schema but still need deployed-project validation with non-privileged credentials.
+- Retention cleanup runs at API startup and is not yet a monitored scheduled job.
 - The hosted demo does not configure Supabase, so API restarts discard in-memory sessions.
 - Render free hosting can cold-start and does not provide a production SLA.
 

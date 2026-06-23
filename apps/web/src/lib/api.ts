@@ -10,6 +10,7 @@ import type {
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
 const ACCESS_TOKEN_STORAGE_KEY = "interviewing-agent.api-access-token";
+const SESSION_TOKEN_STORAGE_PREFIX = "interviewing-agent.session-access-token.";
 
 export const API_ACCESS_TOKEN_REQUIRED =
   process.env.NEXT_PUBLIC_REQUIRE_ACCESS_TOKEN === "true";
@@ -34,11 +35,42 @@ export function setApiAccessToken(token: string): void {
   }
 }
 
+export function rememberBootstrapSessionAccess(bootstrap: BootstrapResponse): void {
+  setSessionAccessToken(bootstrap.session.id, bootstrap.session_access_token);
+}
+
+export function clearSessionAccessToken(sessionId: string): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+  window.sessionStorage.removeItem(`${SESSION_TOKEN_STORAGE_PREFIX}${sessionId}`);
+}
+
+function getSessionAccessToken(sessionId: string): string {
+  if (typeof window === "undefined") {
+    return "";
+  }
+  return window.sessionStorage.getItem(`${SESSION_TOKEN_STORAGE_PREFIX}${sessionId}`) ?? "";
+}
+
+function setSessionAccessToken(sessionId: string, token: string): void {
+  if (typeof window === "undefined" || !sessionId || !token) {
+    return;
+  }
+  window.sessionStorage.setItem(`${SESSION_TOKEN_STORAGE_PREFIX}${sessionId}`, token);
+}
+
 function authenticatedHeaders(
   headers: Record<string, string> = {},
+  sessionId?: string,
 ): Record<string, string> {
   const token = getApiAccessToken();
-  return token ? { ...headers, Authorization: `Bearer ${token}` } : headers;
+  const sessionToken = sessionId ? getSessionAccessToken(sessionId) : "";
+  return {
+    ...headers,
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(sessionToken ? { "X-Interview-Session-Token": sessionToken } : {}),
+  };
 }
 
 async function extractErrorMessage(response: Response): Promise<string> {
@@ -73,7 +105,9 @@ export async function bootstrapInterview(file: File): Promise<BootstrapResponse>
     body: formData,
   });
 
-  return handleResponse<BootstrapResponse>(response);
+  const bootstrap = await handleResponse<BootstrapResponse>(response);
+  rememberBootstrapSessionAccess(bootstrap);
+  return bootstrap;
 }
 
 export async function bootstrapInterviewFromParsedResume(payload: {
@@ -90,7 +124,9 @@ export async function bootstrapInterviewFromParsedResume(payload: {
     body: JSON.stringify(payload),
   });
 
-  return handleResponse<BootstrapResponse>(response);
+  const bootstrap = await handleResponse<BootstrapResponse>(response);
+  rememberBootstrapSessionAccess(bootstrap);
+  return bootstrap;
 }
 
 export async function sendInterviewTurn(
@@ -100,9 +136,12 @@ export async function sendInterviewTurn(
 ): Promise<InterviewTurnResponse> {
   const response = await fetch(`${API_BASE_URL}/interviews/${sessionId}/turn`, {
     method: "POST",
-    headers: authenticatedHeaders({
-      "Content-Type": "application/json",
-    }),
+    headers: authenticatedHeaders(
+      {
+        "Content-Type": "application/json",
+      },
+      sessionId,
+    ),
     body: JSON.stringify({
       candidate_response: candidateResponse,
       metadata,
@@ -117,7 +156,7 @@ export async function getInterviewSession(
 ): Promise<InterviewSession> {
   const response = await fetch(`${API_BASE_URL}/interviews/${sessionId}`, {
     method: "GET",
-    headers: authenticatedHeaders(),
+    headers: authenticatedHeaders({}, sessionId),
     cache: "no-store",
   });
   return handleResponse<InterviewSession>(response);
@@ -128,9 +167,12 @@ export async function beginInterview(
 ): Promise<InterviewSession> {
   const response = await fetch(`${API_BASE_URL}/interviews/${sessionId}/begin`, {
     method: "POST",
-    headers: authenticatedHeaders({
-      "Content-Type": "application/json",
-    }),
+    headers: authenticatedHeaders(
+      {
+        "Content-Type": "application/json",
+      },
+      sessionId,
+    ),
   });
   return handleResponse<InterviewSession>(response);
 }
@@ -140,11 +182,26 @@ export async function completeInterview(
 ): Promise<InterviewSession> {
   const response = await fetch(`${API_BASE_URL}/interviews/${sessionId}/complete`, {
     method: "POST",
-    headers: authenticatedHeaders({
-      "Content-Type": "application/json",
-    }),
+    headers: authenticatedHeaders(
+      {
+        "Content-Type": "application/json",
+      },
+      sessionId,
+    ),
   });
   return handleResponse<InterviewSession>(response);
+}
+
+export async function deleteInterviewSession(sessionId: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/interviews/${sessionId}`, {
+    method: "DELETE",
+    headers: authenticatedHeaders({}, sessionId),
+  });
+
+  if (!response.ok) {
+    throw new Error(await extractErrorMessage(response));
+  }
+  clearSessionAccessToken(sessionId);
 }
 
 export async function transcribeAudio(file: Blob): Promise<TranscriptResponse> {

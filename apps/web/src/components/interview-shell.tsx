@@ -8,6 +8,7 @@ import {
   beginInterview,
   completeInterview,
   getInterviewSession,
+  rememberBootstrapSessionAccess,
   sendInterviewTurn,
   transcribeAudio,
 } from "@/lib/api";
@@ -58,6 +59,7 @@ export function InterviewShell() {
     if (raw) {
       const bootstrap = JSON.parse(raw) as BootstrapResponse;
       if (!sessionId || bootstrap.session.id === sessionId) {
+        rememberBootstrapSessionAccess(bootstrap);
         setSession(bootstrap.session);
         setCandidateName(bootstrap.resume.candidate_name || "Candidate");
       }
@@ -132,6 +134,7 @@ export function InterviewShell() {
           localStorage.setItem(
             STORAGE_KEY,
             JSON.stringify({
+              session_access_token: readCachedBootstrap()?.session_access_token ?? "",
               resume: {
                 candidate_name: started.resume.candidate_name || "Candidate",
               },
@@ -150,11 +153,13 @@ export function InterviewShell() {
   }, [session]);
 
   function persistSession(nextSession: InterviewSession) {
+    const cachedBootstrap = readCachedBootstrap();
     setSession(nextSession);
     setCandidateName(nextSession.resume.candidate_name || candidateName);
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
+        session_access_token: cachedBootstrap?.session_access_token ?? "",
         resume: {
           candidate_name: nextSession.resume.candidate_name || candidateName,
         },
@@ -471,4 +476,13 @@ export function InterviewShell() {
       </section>
     </div>
   );
+}
+
+function readCachedBootstrap(): BootstrapResponse | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as BootstrapResponse) : null;
+  } catch {
+    return null;
+  }
 }

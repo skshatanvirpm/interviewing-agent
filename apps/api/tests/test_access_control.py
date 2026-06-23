@@ -3,7 +3,12 @@ from fastapi.testclient import TestClient
 
 from interviewing_agent.config import Settings
 from interviewing_agent.routes.dependencies import require_api_access
-from interviewing_agent.services.access_control import SlidingWindowRateLimiter
+from interviewing_agent.services.access_control import (
+    SlidingWindowRateLimiter,
+    generate_session_access_token,
+    hash_session_access_token,
+    verify_session_access_token,
+)
 
 
 def make_app(*, token: str | None, limit: int = 0) -> FastAPI:
@@ -46,7 +51,7 @@ def test_access_control_requires_matching_bearer_token() -> None:
     assert accepted.status_code == 200
 
 
-def test_access_control_enforces_global_request_limit() -> None:
+def test_access_control_enforces_per_client_request_limit() -> None:
     with TestClient(make_app(token=None, limit=1)) as client:
         accepted = client.get("/protected")
         limited = client.get("/protected")
@@ -54,3 +59,21 @@ def test_access_control_enforces_global_request_limit() -> None:
     assert accepted.status_code == 200
     assert limited.status_code == 429
     assert limited.headers["retry-after"] == "60"
+
+
+def test_rate_limiter_tracks_each_client_key_independently() -> None:
+    limiter = SlidingWindowRateLimiter(limit=1)
+
+    assert limiter.allow("client-a") is True
+    assert limiter.allow("client-a") is False
+    assert limiter.allow("client-b") is True
+
+
+def test_session_access_tokens_are_verified_by_hash() -> None:
+    token = generate_session_access_token()
+    token_hash = hash_session_access_token(token)
+
+    assert token not in token_hash
+    assert verify_session_access_token(token, token_hash) is True
+    assert verify_session_access_token("wrong-token", token_hash) is False
+    assert verify_session_access_token(token, None) is False

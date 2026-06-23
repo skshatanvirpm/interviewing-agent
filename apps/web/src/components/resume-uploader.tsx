@@ -9,6 +9,7 @@ import {
   bootstrapInterview,
   bootstrapInterviewFromParsedResume,
   getApiAccessToken,
+  rememberBootstrapSessionAccess,
   setApiAccessToken,
 } from "@/lib/api";
 import type { BootstrapResponse, ParsedResumeHistoryEntry } from "@/lib/types";
@@ -65,6 +66,7 @@ export function ResumeUploader() {
     setSelectedHistoryId(historyId);
     setInfo(nextInfo);
     setShowParsedDetails(false);
+    rememberBootstrapSessionAccess(bootstrap);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(bootstrap));
   }
 

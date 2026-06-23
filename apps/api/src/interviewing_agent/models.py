@@ -84,6 +84,7 @@ class ProctoringSummary(BaseModel):
 
 class InterviewSession(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
+    session_access_token_hash: str | None = Field(default=None, exclude=True)
     current_phase: InterviewPhase = InterviewPhase.PHASE_1_INTRO
     target_company: str
     target_role: str
@@ -106,6 +107,7 @@ class InterviewSession(BaseModel):
 class BootstrapResponse(BaseModel):
     resume: ParsedResume
     session: InterviewSession
+    session_access_token: str
 
 
 class ParsedResumeBootstrapRequest(BaseModel):

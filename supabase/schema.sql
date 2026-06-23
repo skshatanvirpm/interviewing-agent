@@ -28,6 +28,7 @@ create table if not exists resume_sections (
 
 create table if not exists interviews (
   id uuid primary key default gen_random_uuid(),
+  access_token_hash text,
   candidate_id uuid references candidates(id) on delete cascade,
   resume_id uuid references resumes(id) on delete set null,
   target_company text,
@@ -99,6 +100,7 @@ create index if not exists idx_question_bank_domain_tags on question_bank using 
 create index if not exists idx_question_bank_embedding on question_bank using hnsw (embedding vector_cosine_ops);
 
 alter table interviews
+  add column if not exists access_token_hash text,
   add column if not exists hint_recovery_count integer not null default 0,
   add column if not exists empathy_prompt_count integer not null default 0,
   add column if not exists final_feedback jsonb,
@@ -118,3 +120,75 @@ alter table evaluations
   add column if not exists weaknesses jsonb not null default '[]'::jsonb,
   add column if not exists suggestion text,
   add column if not exists confidence numeric(4, 2);
+
+alter table candidates enable row level security;
+alter table resumes enable row level security;
+alter table resume_sections enable row level security;
+alter table interviews enable row level security;
+alter table interview_messages enable row level security;
+alter table evaluations enable row level security;
+alter table question_bank enable row level security;
+
+drop policy if exists "service role manages candidates" on candidates;
+create policy "service role manages candidates"
+  on candidates
+  for all
+  to service_role
+  using (true)
+  with check (true);
+
+drop policy if exists "service role manages resumes" on resumes;
+create policy "service role manages resumes"
+  on resumes
+  for all
+  to service_role
+  using (true)
+  with check (true);
+
+drop policy if exists "service role manages resume sections" on resume_sections;
+create policy "service role manages resume sections"
+  on resume_sections
+  for all
+  to service_role
+  using (true)
+  with check (true);
+
+drop policy if exists "service role manages interviews" on interviews;
+create policy "service role manages interviews"
+  on interviews
+  for all
+  to service_role
+  using (true)
+  with check (true);
+
+drop policy if exists "service role manages interview messages" on interview_messages;
+create policy "service role manages interview messages"
+  on interview_messages
+  for all
+  to service_role
+  using (true)
+  with check (true);
+
+drop policy if exists "service role manages evaluations" on evaluations;
+create policy "service role manages evaluations"
+  on evaluations
+  for all
+  to service_role
+  using (true)
+  with check (true);
+
+drop policy if exists "service role manages question bank" on question_bank;
+create policy "service role manages question bank"
+  on question_bank
+  for all
+  to service_role
+  using (true)
+  with check (true);
+
+drop policy if exists "service role manages resume bucket objects" on storage.objects;
+create policy "service role manages resume bucket objects"
+  on storage.objects
+  for all
+  to service_role
+  using (bucket_id = 'resumes')
+  with check (bucket_id = 'resumes');

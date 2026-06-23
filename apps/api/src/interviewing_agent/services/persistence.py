@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 from functools import cached_property
 from pathlib import Path
 from typing import Any
@@ -98,6 +99,7 @@ class SupabasePersistenceService:
             [
                 {
                     "id": session.id,
+                    "access_token_hash": session.session_access_token_hash,
                     "candidate_id": session.candidate_id,
                     "resume_id": session.resume_id,
                     "target_company": session.target_company,
@@ -185,6 +187,7 @@ class SupabasePersistenceService:
 
         return InterviewSession(
             id=interview["id"],
+            session_access_token_hash=interview.get("access_token_hash"),
             current_phase=InterviewPhase(interview["current_phase"]),
             target_company=interview.get("target_company") or "",
             target_role=interview.get("target_role") or "",
@@ -221,6 +224,52 @@ class SupabasePersistenceService:
                 interview.get("proctoring_summary") or {}
             ),
         )
+
+    def delete_session_data(self, session_id: str) -> bool:
+        if not self.configured:
+            return False
+
+        interviews = self._select(
+            "interviews",
+            {"select": "id,candidate_id,resume_id", "id": f"eq.{session_id}"},
+        )
+        if not interviews:
+            return False
+
+        interview = interviews[0]
+        candidate_id = interview.get("candidate_id")
+
+        if candidate_id:
+            self._delete_candidate_data(candidate_id)
+        else:
+            self._delete("interviews", {"id": f"eq.{session_id}"})
+
+        return True
+
+    def delete_expired_interview_data(self, retention_days: int) -> int:
+        if not self.configured:
+            return 0
+
+        cutoff = datetime.now(timezone.utc) - timedelta(days=retention_days)
+        expired_interviews = self._select(
+            "interviews",
+            {
+                "select": "id,candidate_id",
+                "created_at": f"lt.{cutoff.isoformat()}",
+            },
+        )
+
+        deleted_count = 0
+        for interview in expired_interviews:
+            candidate_id = interview.get("candidate_id")
+            self._delete("interviews", {"id": f"eq.{interview['id']}"})
+            deleted_count += 1
+            if candidate_id and not self._select(
+                "interviews",
+                {"select": "id", "candidate_id": f"eq.{candidate_id}"},
+            ):
+                self._delete_candidate_data(candidate_id)
+        return deleted_count
 
     def _replace_resume_sections(self, resume_id: str, resume: ParsedResume) -> None:
         self._delete("resume_sections", {"resume_id": f"eq.{resume_id}"})
@@ -308,6 +357,28 @@ class SupabasePersistenceService:
             )
             if create_response.status_code not in (200, 201, 409):
                 create_response.raise_for_status()
+
+    def _delete_resume_object(self, storage_path: str) -> None:
+        encoded_path = quote(storage_path, safe="/-_.")
+        url = f"{self._base_url}/storage/v1/object/{self.settings.supabase_resume_bucket}/{encoded_path}"
+        with httpx.Client(timeout=30.0) as client:
+            response = client.delete(url, headers=self._service_headers)
+            if response.status_code not in (200, 204, 404):
+                response.raise_for_status()
+
+    def _delete_candidate_data(self, candidate_id: str) -> None:
+        resumes = self._select(
+            "resumes",
+            {
+                "select": "id,storage_path",
+                "candidate_id": f"eq.{candidate_id}",
+            },
+        )
+        for resume in resumes:
+            storage_path = resume.get("storage_path")
+            if storage_path:
+                self._delete_resume_object(storage_path)
+        self._delete("candidates", {"id": f"eq.{candidate_id}"})
 
     def _upsert(self, table: str, rows: list[dict[str, Any]]) -> None:
         if not rows:

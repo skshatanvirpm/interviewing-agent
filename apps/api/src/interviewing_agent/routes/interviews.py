@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, Depends, File, Response, UploadFile, status
 
 from interviewing_agent.config import Settings
 from interviewing_agent.models import (
@@ -10,7 +10,12 @@ from interviewing_agent.models import (
     InterviewTurnResponse,
     ParsedResumeBootstrapRequest,
 )
-from interviewing_agent.routes.dependencies import get_interview_engine, get_resume_parser, get_settings
+from interviewing_agent.routes.dependencies import (
+    get_interview_engine,
+    get_resume_parser,
+    get_settings,
+    require_session_access,
+)
 from interviewing_agent.routes.uploads import read_resume_upload
 from interviewing_agent.services.interview_engine import InterviewEngine
 from interviewing_agent.services.resume_parser import ResumeParser
@@ -44,7 +49,14 @@ def bootstrap_from_parsed_resume(
     )
 
 
-@router.get("/interviews/{session_id}", response_model=InterviewSession)
+session_dependencies = [Depends(require_session_access)]
+
+
+@router.get(
+    "/interviews/{session_id}",
+    response_model=InterviewSession,
+    dependencies=session_dependencies,
+)
 def get_interview(
     session_id: str,
     interview_engine: InterviewEngine = Depends(get_interview_engine),
@@ -52,7 +64,11 @@ def get_interview(
     return interview_engine.get_session(session_id)
 
 
-@router.post("/interviews/{session_id}/begin", response_model=InterviewSession)
+@router.post(
+    "/interviews/{session_id}/begin",
+    response_model=InterviewSession,
+    dependencies=session_dependencies,
+)
 def begin_interview(
     session_id: str,
     interview_engine: InterviewEngine = Depends(get_interview_engine),
@@ -60,7 +76,11 @@ def begin_interview(
     return interview_engine.begin_intro(session_id)
 
 
-@router.post("/interviews/{session_id}/complete", response_model=InterviewSession)
+@router.post(
+    "/interviews/{session_id}/complete",
+    response_model=InterviewSession,
+    dependencies=session_dependencies,
+)
 def complete_interview(
     session_id: str,
     interview_engine: InterviewEngine = Depends(get_interview_engine),
@@ -68,10 +88,27 @@ def complete_interview(
     return interview_engine.complete_session(session_id)
 
 
-@router.post("/interviews/{session_id}/turn", response_model=InterviewTurnResponse)
+@router.post(
+    "/interviews/{session_id}/turn",
+    response_model=InterviewTurnResponse,
+    dependencies=session_dependencies,
+)
 def interview_turn(
     session_id: str,
     payload: InterviewTurnRequest,
     interview_engine: InterviewEngine = Depends(get_interview_engine),
 ) -> InterviewTurnResponse:
     return interview_engine.process_turn(session_id, payload.candidate_response, payload.metadata)
+
+
+@router.delete(
+    "/interviews/{session_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=session_dependencies,
+)
+def delete_interview(
+    session_id: str,
+    interview_engine: InterviewEngine = Depends(get_interview_engine),
+) -> Response:
+    interview_engine.delete_session_data(session_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

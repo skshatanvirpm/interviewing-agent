@@ -36,11 +36,15 @@
 
 ## Production release
 
-- [ ] Authentication and session authorization are implemented.
-- [ ] Rate limits and provider-cost quotas are implemented.
-- [x] Shared hosted access token and global request limit are configured.
-- [ ] Supabase RLS policies are enabled and tested.
-- [ ] Resume retention, deletion, and export behavior are implemented.
+- [x] Bounded anonymous session authorization is implemented.
+- [x] In-memory per-client rate limits are implemented.
+- [ ] Full user-account authentication is implemented.
+- [ ] Durable provider-cost quotas are implemented.
+- [x] Shared hosted access token and per-client request limit are configured.
+- [x] Supabase RLS policies are defined in the schema.
+- [x] Resume/interview deletion and retention cleanup behavior are implemented.
+- [ ] Supabase RLS policies are tested against a deployed project with non-privileged credentials.
+- [ ] Data export behavior is implemented.
 - [x] Hosting provider and free demonstration services are selected.
 - [ ] Production environment variables are configured.
 - [x] Hosted protected API and web/CORS smoke tests pass.

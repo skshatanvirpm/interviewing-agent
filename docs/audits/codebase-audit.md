@@ -25,11 +25,20 @@ Completed after the initial audit:
 
 - deployed the static Next.js export and FastAPI service on Render;
 - configured exact production CORS and a browser-visible API URL;
-- added a shared deployment bearer-token gate and global protected-request limit;
+- added a shared deployment bearer-token gate and per-client protected-request limit;
 - added local tests for access rejection and request limiting;
 - verified synthetic PDF parsing, session bootstrap, one model-backed turn, completion scoring, and speech generation in the hosted API;
 - verified hosted home, interview, review, and CORS behavior;
-- retained Supabase persistence, user authentication, RLS, retention, and operational monitoring as production-hardening work.
+- retained Supabase persistence, user-account authentication, durable quotas, data export, and operational monitoring as production-hardening work.
+
+## Security and privacy update — 2026-06-23
+
+- added per-session interview tokens and server-side token-hash storage;
+- required session tokens for interview read, begin, turn, completion, and deletion routes;
+- added a product deletion path for session-linked candidate data and private resume objects;
+- added startup retention cleanup for persisted interviews older than the configured retention window;
+- enabled RLS in the Supabase schema and added service-role-only table and private-storage policies;
+- expanded the API suite from 36 to 43 passing tests.
 
 The npm audit still reports two moderate findings because Next.js pins PostCSS 8.4.31 as a private build dependency. The upstream project states that this path runs at build time and is relevant when processing untrusted CSS; this project does not process user-supplied CSS. Track the [upstream issue](https://github.com/vercel/next.js/issues/93234) rather than applying npm's suggested breaking downgrade.
 
@@ -58,23 +67,27 @@ The current implementation is functional as a local project. The main gaps are p
 
 ### 2. Protect costly and sensitive API operations
 
-**Status: partially completed for the hosted demonstration.**
+**Status: completed for the current bounded product model.**
 
-Resume parsing, interview generation, transcription, and speech routes require a shared deployment bearer token when configured. A global in-memory request limit reduces uncontrolled provider usage.
+Resume parsing, interview generation, transcription, and speech routes require a shared deployment bearer token when configured. Interview session state routes also require a per-session token. An in-memory per-client request limit reduces uncontrolled provider usage.
 
-**Remaining outcome:** replace the shared token with user identity, enforce session-level authorization, and add durable per-user limits and provider-cost ceilings.
+**Remaining outcome:** replace the shared token with user identity when user accounts are needed, and add durable per-user limits and provider-cost ceilings.
 
 ### 3. Enable database access controls
 
-The Supabase schema creates application tables but does not enable Row Level Security or define policies. The service-role key bypasses RLS and must remain server-only, but database exposure still needs an explicit security model.
+**Status: implemented in schema; deployed-project validation still required.**
 
-**Required outcome:** enable RLS where appropriate, define ownership policies, and verify that no privileged key is exposed to the browser.
+The Supabase schema enables RLS and defines service-role-only policies for product tables and private resume storage. The service-role key remains server-only.
+
+**Remaining outcome:** apply the schema to the target Supabase project and verify access with non-privileged credentials.
 
 ### 4. Define resume privacy and retention behavior
 
-Uploaded resumes and parsed candidate information are persisted without a documented retention period, deletion path, consent record, or data-export process.
+**Status: deletion and retention are implemented; consent/export remain production items.**
 
-**Required outcome:** add consent language, retention rules, deletion support, and storage lifecycle handling before collecting real user data in production.
+The API exposes a session deletion path and retention cleanup can purge persisted data older than the configured retention window. Private resume storage objects are deleted with session-linked candidate data.
+
+**Remaining outcome:** add explicit consent language, a data-export path, and operational monitoring for scheduled retention behavior.
 
 ### 5. Complete production deployment configuration
 
@@ -122,12 +135,11 @@ The API keeps an in-memory session store and restores from Supabase when needed.
 
 ### 11. Expand automated quality checks
 
-Current coverage verifies the core fallback interview flow, scoring calibration, question retrieval, configuration, upload validation, safe provider failures, and resume normalization. Missing areas include:
+Current coverage verifies the core fallback interview flow, scoring calibration, question retrieval, configuration, upload validation, safe provider failures, resume normalization, session authorization, in-memory request limiting, deletion, and retention behavior. Missing areas include:
 
-- persistence contract tests,
-- authorization and rate limiting,
+- live Supabase persistence tests,
 - full CORS middleware integration,
-- hosted deployment smoke tests,
+- hosted session-token deletion smoke tests,
 - Python linting and static analysis.
 
 ### 12. Verify third-party data usage

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -32,9 +34,27 @@ session_store = MemorySessionStore()
 persistence_service = SupabasePersistenceService(settings)
 evaluation_service = EvaluationService()
 
+
+def run_retention_cleanup() -> None:
+    if not settings.interview_retention_cleanup_enabled:
+        return
+    deleted_count = persistence_service.delete_expired_interview_data(
+        settings.interview_data_retention_days
+    )
+    if deleted_count:
+        logger.info("Deleted expired interview records.", extra={"deleted_count": deleted_count})
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    run_retention_cleanup()
+    yield
+
+
 app = FastAPI(
     title="Interviewing Agent API",
     description="Resume parsing, interview orchestration, and audio services.",
+    lifespan=lifespan,
 )
 
 app.add_middleware(

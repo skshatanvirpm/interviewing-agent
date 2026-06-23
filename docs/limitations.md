@@ -16,9 +16,11 @@
 - In-memory session caching is not concurrency-safe across multiple API workers.
 - Supabase persistence uses direct REST calls and a privileged server key.
 - The schema is maintained as one idempotent SQL file rather than versioned migrations.
-- The hosted access token is a shared demonstration gate, not user authentication or session-level authorization.
-- The global request limiter is in-memory and does not provide per-user quotas or durable cost accounting.
-- RLS, retention, and deletion APIs are not implemented.
+- The hosted access token is a shared deployment gate, not full user-account authentication.
+- Session-level authorization uses bounded anonymous session tokens rather than named user accounts.
+- The request limiter is in-memory and does not provide durable cost accounting.
+- Retention cleanup runs at API startup and is not a separately monitored scheduled job.
+- RLS policies are defined in the schema, but they must still be validated against the deployed Supabase project with non-privileged credentials.
 - The hosted Render environment does not configure Supabase, so sessions are lost when the API restarts or spins down.
 - Render free services can cold-start after inactivity and do not provide a production SLA.
 - Provider latency, cost, fallback rate, and evaluation quality are not centrally monitored.

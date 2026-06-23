@@ -21,7 +21,7 @@
 3. `done` — IA-702 Remove the legacy markdown-secret runtime path.
 4. `done` — IA-807 Harden configuration, uploads, and provider error handling.
 5. `done` — IA-803 Validate CI/CD and hosted deployment.
-6. `todo` — IA-903 Add production security and privacy controls.
+6. `done` — IA-903 Add production security and privacy controls.
 7. `done` — IA-904 Complete the maintained project documentation suite.
 8. `done` — IA-808 Replace externally derived question data with project-authored content.
 
@@ -109,7 +109,7 @@
 | IA-806 | done | PM / Full-stack | IA-805 | Audit the repository and codebase | `docs/audits/codebase-audit.md` records evidence, risks, priorities, and the recommended execution order. |
 | IA-807 | done | Backend / Full-stack | IA-702, IA-806 | Harden configuration, uploads, and provider errors | CORS and interviewer identity are configurable; uploads enforce type and size rules; provider failures use safe responses and server logs; test dependencies are separated. |
 | IA-808 | done | Data / Full-stack | IA-806 | Replace externally derived question data | The distributable source and 384-dimensional JSONL artifact contain project-authored questions with documented provenance. |
-| IA-903 | todo | Backend / Infra | IA-806, IA-807 | Add production security and privacy controls | Authentication, rate limiting, RLS, and retention/deletion behavior are implemented and tested. |
+| IA-903 | done | Backend / Infra | IA-806, IA-807 | Add production security and privacy controls | Session authorization, per-client rate limiting, RLS schema policies, and retention/deletion behavior are implemented and tested. |
 | IA-904 | done | PM / Full-stack | IA-806, IA-808 | Complete maintained project documentation | Architecture, API, configuration, testing, deployment, security, limitations, decisions, release guidance, examples, and screenshots are complete and cross-linked. |
 
 ## Deferred Product Backlog

@@ -10,7 +10,9 @@ The FastAPI service exposes JSON and multipart endpoints. Interactive OpenAPI do
 - Unexpected provider errors return stable client messages and are logged server-side.
 - `/health` and the OpenAPI documentation are public.
 - All resume, interview, and audio routes require `Authorization: Bearer <token>` when `API_ACCESS_TOKEN` is configured.
-- Protected routes return `401` for an invalid token and `429` when the configured global request limit is reached.
+- Bootstrap routes return a per-session token in `session_access_token`.
+- Interview session routes require `X-Interview-Session-Token: <session_access_token>`.
+- Protected routes return `401` for an invalid deployment token, `403` for an invalid session token, and `429` when the configured per-client request limit is reached.
 
 ## Endpoints
 
@@ -24,6 +26,7 @@ The FastAPI service exposes JSON and multipart endpoints. Interactive OpenAPI do
 | `POST` | `/interviews/{session_id}/begin` | Add the introduction question after the greeting |
 | `POST` | `/interviews/{session_id}/turn` | Submit a candidate response and receive the next turn |
 | `POST` | `/interviews/{session_id}/complete` | End a session and generate final evaluation |
+| `DELETE` | `/interviews/{session_id}` | Delete the session's interview data |
 | `POST` | `/audio/transcribe` | Transcribe an uploaded audio file |
 | `POST` | `/audio/speak` | Generate WAV speech from interviewer text |
 
@@ -68,6 +71,7 @@ The response contains:
     "headline": "Machine Learning Engineer",
     "summary": "..."
   },
+  "session_access_token": "opaque-session-token",
   "session": {
     "id": "uuid",
     "current_phase": "phase_1_intro",
@@ -76,11 +80,14 @@ The response contains:
 }
 ```
 
+Store `session_access_token` client-side only for the active interview. Do not log or commit it.
+
 ## Submit an interview turn
 
 ```bash
 curl -X POST http://127.0.0.1:8000/interviews/SESSION_ID/turn \
   -H "Authorization: Bearer $API_ACCESS_TOKEN" \
+  -H "X-Interview-Session-Token: $SESSION_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "candidate_response": "I built a retrieval pipeline and owned its evaluation.",
@@ -97,6 +104,16 @@ curl -X POST http://127.0.0.1:8000/interviews/SESSION_ID/turn \
 ```
 
 The response includes the complete updated session and `latest_reply`.
+
+## Delete an interview session
+
+```bash
+curl -X DELETE http://127.0.0.1:8000/interviews/SESSION_ID \
+  -H "Authorization: Bearer $API_ACCESS_TOKEN" \
+  -H "X-Interview-Session-Token: $SESSION_ACCESS_TOKEN"
+```
+
+The API returns `204 No Content` when the session data has been deleted. With Supabase configured, candidate-linked rows are deleted through cascade rules and private resume objects are removed from storage.
 
 ## Audio transcription
 

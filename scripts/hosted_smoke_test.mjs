@@ -66,18 +66,27 @@ if (!bootstrap.ok) {
   );
 }
 const sessionId = bootstrapBody.json.session.id;
+const sessionAccessToken = bootstrapBody.json.session_access_token;
+const sessionHeaders = {
+  ...authenticatedHeaders,
+  "X-Interview-Session-Token": sessionAccessToken,
+};
 console.log(
   JSON.stringify({
     check: "PDF bootstrap",
     status: bootstrap.status,
     candidate: bootstrapBody.json.resume.candidate_name,
     sessionCreated: Boolean(sessionId),
+    sessionTokenIssued: Boolean(sessionAccessToken),
   }),
 );
+if (!sessionId || !sessionAccessToken) {
+  throw new Error("PDF bootstrap did not return a session and session token.");
+}
 
 const turn = await fetch(`${apiBaseUrl}/interviews/${sessionId}/turn`, {
   method: "POST",
-  headers: { ...authenticatedHeaders, "Content-Type": "application/json" },
+  headers: { ...sessionHeaders, "Content-Type": "application/json" },
   body: JSON.stringify({
     candidate_response:
       "I build retrieval and recommendation systems with measurable offline and online evaluation.",
@@ -109,7 +118,7 @@ console.log(
 
 const completed = await fetch(`${apiBaseUrl}/interviews/${sessionId}/complete`, {
   method: "POST",
-  headers: { ...authenticatedHeaders, "Content-Type": "application/json" },
+  headers: { ...sessionHeaders, "Content-Type": "application/json" },
 });
 const completedBody = await responseBody(completed);
 console.log(

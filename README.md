@@ -19,6 +19,7 @@ The hosted interface requires a deployment access token. The token is not embedd
 - Phase scoring, weighted final scoring, and a dedicated review page
 - Supabase persistence for resumes, sessions, transcripts, and evaluations
 - Optional camera preview, browser integrity signals, and realtime-assist mode
+- Deployment token gate, per-session authorization, per-client request limiting, RLS schema policies, and deletion/retention paths
 - API tests and web lint, typecheck, build, and CI workflows
 - Protected Render deployment with hosted route, CORS, API, and provider smoke tests
 
@@ -75,6 +76,7 @@ Operational settings include:
 - `INTERVIEWER_NAME`, `INTERVIEW_TARGET_ROLE`, and `INTERVIEW_TARGET_COMPANY`
 - `CORS_ALLOWED_ORIGINS`
 - `API_ACCESS_TOKEN` and `API_RATE_LIMIT_PER_MINUTE`
+- `SESSION_ACCESS_HEADER`, `INTERVIEW_DATA_RETENTION_DAYS`, and `INTERVIEW_RETENTION_CLEANUP_ENABLED`
 - `MAX_RESUME_UPLOAD_BYTES` and `MAX_AUDIO_UPLOAD_BYTES`
 - `LOG_LEVEL`
 
@@ -154,4 +156,4 @@ The static web application and FastAPI service are deployed on Render:
 - Web: [interviewing-agent-skshatanvirpm.onrender.com](https://interviewing-agent-skshatanvirpm.onrender.com)
 - API health: [interviewing-agent-api-skshatanvirpm.onrender.com/health](https://interviewing-agent-api-skshatanvirpm.onrender.com/health)
 
-Render automatically deploys changes from `main`, and GitHub Actions verifies the hosted web routes and CORS policy. The hosted environment uses an API access token and global request limit. Supabase persistence and the remaining production security/privacy controls are not configured, so the hosted instance is a bounded project demonstration rather than a production service.
+Render automatically deploys changes from `main`, and GitHub Actions verifies the hosted web routes and CORS policy. The hosted environment uses an API access token, per-session interview tokens, and a per-client request limit. Supabase persistence, full user-account authentication, durable quotas, data export, and operational monitoring are not configured, so the hosted instance is a bounded project demonstration rather than a production service.

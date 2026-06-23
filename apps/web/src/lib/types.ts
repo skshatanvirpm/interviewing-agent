@@ -91,6 +91,7 @@ export interface InterviewSession {
 export interface BootstrapResponse {
   resume: ParsedResume;
   session: InterviewSession;
+  session_access_token: string;
 }
 
 export interface ParsedResumeHistoryEntry {

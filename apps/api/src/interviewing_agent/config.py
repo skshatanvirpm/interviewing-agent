@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     cors_allow_credentials: bool = True
     api_access_token: str | None = None
     api_rate_limit_per_minute: int = Field(default=0, ge=0)
+    session_access_header: str = "X-Interview-Session-Token"
+    interview_data_retention_days: int = Field(default=30, ge=1)
+    interview_retention_cleanup_enabled: bool = True
     log_level: str = "INFO"
     max_resume_upload_bytes: int = Field(default=10 * 1024 * 1024, gt=0)
     max_audio_upload_bytes: int = Field(default=25 * 1024 * 1024, gt=0)

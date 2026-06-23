@@ -39,9 +39,9 @@ sequenceDiagram
     W->>A: POST /sessions/bootstrap
     A->>M: Parse resume when configured
     A->>D: Persist resume and session when configured
-    A-->>W: Parsed resume and opening session
+    A-->>W: Parsed resume, opening session, and session token
     C->>W: Submit text or recorded answer
-    W->>A: POST interview turn
+    W->>A: POST interview turn with session token
     A->>M: Generate next question when configured
     A->>D: Persist transcript and state
     A-->>W: Updated session and interviewer reply
@@ -61,7 +61,8 @@ sequenceDiagram
 | `services/question_bank.py` | Question loading, embeddings, ranking, and duplicate avoidance |
 | `services/evaluation.py` | Per-phase evidence, scoring, and final feedback |
 | `services/audio.py` | Speech-to-text and text-to-speech provider calls |
-| `services/persistence.py` | Supabase REST and Storage integration |
+| `services/persistence.py` | Supabase REST, Storage, deletion, and retention integration |
+| `services/access_control.py` | Deployment token checks, per-client limiting, and session-token helpers |
 | `models.py` | API and domain contracts |
 | `config.py` | Environment-backed settings and configuration validation |
 
@@ -80,15 +81,18 @@ sequenceDiagram
 
 ## State and persistence
 
-The browser stores the latest bootstrap/session snapshot and up to eight parsed-resume history records in `localStorage`. The API keeps an in-memory session cache. When Supabase is configured, it persists:
+The browser stores the latest bootstrap/session snapshot and up to eight parsed-resume history records in `localStorage`. It also stores the active interview session token in `sessionStorage` and sends it as `X-Interview-Session-Token` for interview state routes. The API stores only the token hash. The API keeps an in-memory session cache. When Supabase is configured, it persists:
 
 - candidate and parsed resume data;
 - original resume files in a private bucket;
 - interview state and messages;
 - phase evaluations and final feedback;
 - optional interaction and integrity metadata.
+- session access token hashes.
 
-The current design is suitable for local and single-worker use. Multi-worker deployment requires an authoritative shared session strategy or explicit optimistic concurrency.
+The API can delete a session's candidate-linked data and private resume object. Retention cleanup can purge persisted interview data older than the configured retention window at API startup.
+
+The current design is suitable for local and single-worker use. Multi-worker deployment requires an authoritative shared session strategy, durable rate limiting, or explicit optimistic concurrency.
 
 ## AI and retrieval behavior
 
@@ -104,4 +108,8 @@ The current design is suitable for local and single-worker use. Multi-worker dep
 - The browser receives session and evaluation data but not service-role credentials.
 - Upload validation occurs before parsing or transcription.
 - CORS origins are configured explicitly.
-- Authentication, rate limiting, Row Level Security policies, and retention/deletion APIs remain release prerequisites for public production use.
+- Bootstrap creates bounded anonymous session tokens for session authorization.
+- Protected API routes can require a deployment bearer token.
+- Protected requests are limited per client in memory.
+- Supabase RLS policies restrict direct table access to the service role.
+- Full user-account authentication, durable provider-cost quotas, and monitored retention jobs remain release prerequisites for public production use.

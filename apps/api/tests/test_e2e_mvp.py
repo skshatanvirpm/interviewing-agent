@@ -39,6 +39,12 @@ def make_engine() -> InterviewEngine:
     )
 
 
+def session_headers(bootstrap_payload: dict) -> dict[str, str]:
+    return {
+        "X-Interview-Session-Token": bootstrap_payload["session_access_token"],
+    }
+
+
 def test_api_flow_covers_bootstrap_turns_feedback_and_audio() -> None:
     app.state.resume_parser = StubResumeParser()
     app.state.interview_engine = make_engine()
@@ -50,8 +56,13 @@ def test_api_flow_covers_bootstrap_turns_feedback_and_audio() -> None:
             files={"resume": ("candidate.pdf", b"%PDF-1.4 fake", "application/pdf")},
         )
         assert bootstrap_response.status_code == 200
-        session = bootstrap_response.json()["session"]
+        bootstrap_payload = bootstrap_response.json()
+        session = bootstrap_payload["session"]
         session_id = session["id"]
+        headers = session_headers(bootstrap_payload)
+
+        assert bootstrap_payload["session_access_token"]
+        assert "session_access_token_hash" not in session
 
         answers = [
             "I build machine learning systems focused on retrieval and recommendation.",
@@ -72,6 +83,7 @@ def test_api_flow_covers_bootstrap_turns_feedback_and_audio() -> None:
             answer = answers[min(answer_index, len(answers) - 1)]
             turn_response = client.post(
                 f"/interviews/{session_id}/turn",
+                headers=headers,
                 json={
                     "candidate_response": answer,
                     "metadata": {
@@ -89,7 +101,7 @@ def test_api_flow_covers_bootstrap_turns_feedback_and_audio() -> None:
             latest_phase = turn_response.json()["session"]["current_phase"]
             answer_index += 1
 
-        interview_response = client.get(f"/interviews/{session_id}")
+        interview_response = client.get(f"/interviews/{session_id}", headers=headers)
         assert interview_response.status_code == 200
         restored = interview_response.json()
         assert restored["messages"]
@@ -138,6 +150,7 @@ def test_api_can_bootstrap_from_cached_parsed_resume() -> None:
         assert response.status_code == 200
         payload = response.json()
         assert payload["resume"]["candidate_name"] == "Cached Candidate"
+        assert payload["session_access_token"]
         assert payload["session"]["candidate_id"] == "candidate-123"
         assert payload["session"]["resume_id"] == "resume-123"
         assert payload["session"]["messages"][0]["role"] == "interviewer"
@@ -153,9 +166,13 @@ def test_api_can_begin_intro_after_greeting() -> None:
             "/sessions/bootstrap",
             files={"resume": ("candidate.pdf", b"%PDF-1.4 fake", "application/pdf")},
         )
-        session_id = bootstrap.json()["session"]["id"]
+        bootstrap_payload = bootstrap.json()
+        session_id = bootstrap_payload["session"]["id"]
 
-        started = client.post(f"/interviews/{session_id}/begin")
+        started = client.post(
+            f"/interviews/{session_id}/begin",
+            headers=session_headers(bootstrap_payload),
+        )
         payload = started.json()
 
         assert started.status_code == 200
@@ -174,10 +191,13 @@ def test_api_can_end_interview_and_return_review_session() -> None:
             "/sessions/bootstrap",
             files={"resume": ("candidate.pdf", b"%PDF-1.4 fake", "application/pdf")},
         )
-        session_id = bootstrap.json()["session"]["id"]
+        bootstrap_payload = bootstrap.json()
+        session_id = bootstrap_payload["session"]["id"]
+        headers = session_headers(bootstrap_payload)
 
         client.post(
             f"/interviews/{session_id}/turn",
+            headers=headers,
             json={
                 "candidate_response": "I led retrieval and recommendation work in production ML systems.",
                 "metadata": {
@@ -192,7 +212,7 @@ def test_api_can_end_interview_and_return_review_session() -> None:
             },
         )
 
-        completed = client.post(f"/interviews/{session_id}/complete")
+        completed = client.post(f"/interviews/{session_id}/complete", headers=headers)
         payload = completed.json()
 
         assert completed.status_code == 200
@@ -200,3 +220,52 @@ def test_api_can_end_interview_and_return_review_session() -> None:
         assert payload["messages"][-1]["phase"] == InterviewPhase.COMPLETE.value
         assert payload["scores"]["overall"] is not None
         assert payload["final_feedback"] is not None
+
+
+def test_session_routes_reject_missing_or_wrong_session_token() -> None:
+    app.state.resume_parser = StubResumeParser()
+    app.state.interview_engine = make_engine()
+    app.state.audio_service = StubAudioService()
+
+    with TestClient(app) as client:
+        bootstrap = client.post(
+            "/sessions/bootstrap",
+            files={"resume": ("candidate.pdf", b"%PDF-1.4 fake", "application/pdf")},
+        )
+        bootstrap_payload = bootstrap.json()
+        session_id = bootstrap_payload["session"]["id"]
+
+        missing = client.get(f"/interviews/{session_id}")
+        wrong = client.get(
+            f"/interviews/{session_id}",
+            headers={"X-Interview-Session-Token": "wrong-token"},
+        )
+        accepted = client.get(
+            f"/interviews/{session_id}",
+            headers=session_headers(bootstrap_payload),
+        )
+
+    assert missing.status_code == 403
+    assert wrong.status_code == 403
+    assert accepted.status_code == 200
+
+
+def test_api_can_delete_interview_data() -> None:
+    app.state.resume_parser = StubResumeParser()
+    app.state.interview_engine = make_engine()
+    app.state.audio_service = StubAudioService()
+
+    with TestClient(app) as client:
+        bootstrap = client.post(
+            "/sessions/bootstrap",
+            files={"resume": ("candidate.pdf", b"%PDF-1.4 fake", "application/pdf")},
+        )
+        bootstrap_payload = bootstrap.json()
+        session_id = bootstrap_payload["session"]["id"]
+        headers = session_headers(bootstrap_payload)
+
+        deleted = client.delete(f"/interviews/{session_id}", headers=headers)
+        after_delete = client.get(f"/interviews/{session_id}", headers=headers)
+
+    assert deleted.status_code == 204
+    assert after_delete.status_code == 404

@@ -67,16 +67,16 @@ This project is being tracked in version-based sprints. Each version groups work
 
 ## v0.6 Repository Readiness and Hardening
 
-- Status: In progress
+- Status: Completed
 - Objective: Make the project structurally clear, safe to version, and ready for production-hardening work.
 - Included task IDs: `IA-702`, `IA-803`, `IA-805`, `IA-806`, `IA-807`, `IA-808`, `IA-903`, `IA-904`
-- Completed: `IA-702`, `IA-803`, `IA-805`, `IA-806`, `IA-807`, `IA-808`, `IA-904`
+- Completed: `IA-702`, `IA-803`, `IA-805`, `IA-806`, `IA-807`, `IA-808`, `IA-903`, `IA-904`
 - Exit criteria:
   - private and generated files cannot enter version control accidentally,
   - maintained documents agree with implemented behavior,
   - the legacy markdown-secret path is removed,
   - CORS, interviewer identity, upload limits, and provider errors are hardened,
   - distributable question-bank content has clear project-owned provenance,
-  - production security and privacy controls are implemented,
+  - session authorization, per-client limiting, RLS schema policies, and retention/deletion controls are implemented,
   - hosted deployment passes an end-to-end smoke test,
   - maintained project documentation covers architecture, operations, testing, deployment, and limitations.

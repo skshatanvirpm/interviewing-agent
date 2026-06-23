@@ -12,7 +12,13 @@
 - CI fails on high or critical npm advisories.
 - Hosted resume, interview, and audio routes require a deployment bearer token.
 - The browser keeps that token in `sessionStorage`; it is not embedded in public build output.
-- Hosted protected requests use a configurable global per-minute limit.
+- Bootstrap responses issue a high-entropy interview session token.
+- Session tokens are sent with `X-Interview-Session-Token` and only their SHA-256 hashes are stored server-side.
+- Interview read, turn, completion, and deletion routes require the matching session token.
+- Protected requests use a configurable in-memory per-client per-minute limit.
+- The API exposes a session deletion route and can purge expired persisted sessions by retention window.
+- The review deletion action clears the active browser session snapshot and matching parsed-resume history entries.
+- Supabase schema enables RLS on product tables and restricts direct table access to the service role.
 
 ## Data handled
 
@@ -30,24 +36,22 @@ This information can be personal and should be treated as sensitive.
 
 ### Access control
 
-- Replace the shared deployment token with user authentication or bounded anonymous session tokens.
-- Authorize every session read/write operation.
-- Add per-user rate limits, durable counters, and provider-cost quotas.
+- Replace the shared deployment token with full user authentication when multi-user accounts are required.
+- Add durable per-user counters and provider-cost quotas.
 - Prevent session enumeration and cross-user access.
 
 ### Supabase
 
-- Enable Row Level Security and define ownership policies.
+- Validate RLS policies against the deployed Supabase project with non-privileged credentials.
 - Confirm the browser never receives the service-role key.
 - Use a private resume bucket.
-- Add retention and deletion procedures.
-- Test access using non-privileged credentials.
+- Keep retention and deletion procedures operationally monitored.
 
 ### Privacy
 
 - Obtain explicit consent before storing resumes, transcripts, audio, or camera-related signals.
 - Publish a retention period.
-- Provide deletion and export paths.
+- Provide export paths if users need a copy of stored interviews.
 - Minimize integrity telemetry and avoid presenting it as definitive cheating detection.
 - Document provider data processing and regional requirements.
 
