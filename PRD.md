@@ -3,7 +3,7 @@
 ## Document Status
 
 - Status: Maintained product baseline
-- Last updated: 2026-06-22
+- Last updated: 2026-06-23
 - Source inputs: `docs/archive/discovery/ideas.md`, `docs/archive/discovery/concept-v0.md`, `docs/examples/job-description.md`
 
 ## 1. Product Summary
@@ -12,7 +12,50 @@ Build an audio-first mock interviewing agent for Machine Learning, GenAI, and ad
 
 V1 is a responsive web app with turn-based audio. It should prove that the product can run a realistic role-aligned interview loop before adding advanced proctoring, realtime streaming conversation, or deployment automation.
 
-The current local implementation has completed the V1 loop and includes later experiments for browser realtime assistance, camera preview, integrity telemetry, and deployment automation. Those additions do not change the V1 scope definition below; their current maturity is tracked in `TASKS.md` and `SPRINTS.md`.
+The current implementation has completed the V1 loop and includes later improvements for browser realtime assistance, camera preview, integrity telemetry, deployment automation, session authorization, rate limiting, retention, deletion, and maintained project documentation. Those additions do not change the V1 scope definition below; their current maturity is tracked in `TASKS.md` and `SPRINTS.md`.
+
+### 1.1 Product Manager Summary
+
+| Area | Product position |
+| --- | --- |
+| Target user | ML, GenAI, recommendation-system, and AI engineering candidates preparing for role-specific technical interviews. |
+| Core problem | Existing practice tools are generic, shallow, and disconnected from the candidate's actual resume and target role. |
+| Product solution | A resume-aware interview agent that conducts a structured five-phase interview, probes technical depth, supports turn-based audio, and generates evidence-based feedback. |
+| Primary value | Candidates can identify weak technical reasoning, communication gaps, and role-alignment issues before a real interview. |
+| Differentiator | The product uses resume context, job-description context, phase-specific evaluation, Socratic follow-ups, hint recovery, and final scoring instead of a static question script. |
+| MVP boundary | Prove the end-to-end interview loop before investing in full duplex streaming, advanced video analysis, identity verification, or multi-tenant production operations. |
+
+### 1.2 Problem and Solution Framing
+
+| Dimension | Product framing |
+| --- | --- |
+| User situation | The candidate has real AI/ML projects on their resume and wants realistic preparation for a technical interview. |
+| Pain point | Generic mock interviews do not test whether the candidate can explain architecture, trade-offs, failures, evaluation, and production decisions from their own work. |
+| Current workaround | Candidates use generic question lists, peer practice, or general chatbots, but these tools rarely expose shallow understanding. |
+| Why it matters | AI engineering interviews increasingly evaluate depth, applied reasoning, communication, and production maturity, not only textbook answers. |
+| Solution hypothesis | A structured, resume-aware AI interviewer can produce more useful preparation by adapting follow-up questions to the candidate's actual answers. |
+| Expected outcome | The candidate completes a realistic interview and receives specific evidence-backed feedback on strengths, weaknesses, role fit, and next improvement actions. |
+
+### 1.3 Built Product and Documentation Coverage
+
+| Artifact | Purpose | Status |
+| --- | --- | --- |
+| `README.md` | Project overview, capabilities, setup, verification, links, deployment status | Complete |
+| `PRD.md` | Product problem, solution, scope, requirements, metrics, architecture, risks | Complete |
+| `TASKS.md` | Work breakdown, task status, dependencies, done criteria | Complete |
+| `SPRINTS.md` | Version-based delivery history and exit criteria | Complete |
+| `WALKTHROUGH.md` | Current architecture, feature flow, modules, runtime behavior, limitations | Complete |
+| `docs/architecture.md` | System architecture, frontend/backend boundaries, trust boundaries | Complete |
+| `docs/api.md` | API endpoints, auth/session-token behavior, examples | Complete |
+| `docs/configuration.md` | Environment variables and production configuration rules | Complete |
+| `docs/testing.md` | Local, CI, and hosted verification guidance | Complete |
+| `docs/deployment.md` | Render deployment model, smoke tests, rollback, database setup | Complete |
+| `docs/security.md` | Security and privacy controls, sensitive data, remaining production requirements | Complete |
+| `docs/limitations.md` | Product, technical, evaluation, and repository limitations | Complete |
+| `docs/release-checklist.md` | Repository, quality, data, production, and GitHub readiness checklist | Complete |
+| `docs/audits/codebase-audit.md` | Codebase assessment, hardening updates, remaining risks | Complete |
+| `docs/examples/` | Synthetic job description, sample resume, question-bank source | Complete |
+| `docs/assets/screenshots/` | Synthetic UI screenshots for product walkthrough | Complete |
 
 ## 2. Strategic Context
 
@@ -124,6 +167,36 @@ The product must therefore go beyond generic chat and behave like a role-aware i
 4. Interviewer runs through five phases with turn-based audio interaction.
 5. System stores transcript, state, and evaluation artifacts.
 6. Candidate sees a final performance summary at the end of the interview.
+
+### 7.1 Step-by-Step Product Experience and Timing
+
+The target interview session should feel substantial but bounded. A complete V1 practice session should generally fit inside a 40- to 65-minute preparation block, depending on answer length and whether the candidate uses audio.
+
+| Step | Candidate action | System behavior | Expected timing | Output |
+| --- | --- | --- | --- | --- |
+| 1 | Open the web app and prepare the resume | Shows the product entry point and, in hosted mode, asks for the deployment access token | 1-2 minutes | Candidate is ready to start |
+| 2 | Upload a PDF resume or reuse a parsed local history item | Validates file type and size, then sends resume data to the API | 1-3 minutes | Resume submitted for parsing |
+| 3 | Wait for resume processing | Parses the resume, extracts structured sections, infers domains, creates an interview session, and issues a session token | 10-60 seconds | Parsed resume and session created |
+| 4 | Review parsed resume summary | Shows candidate name, headline, projects, skills, domains, and optional parsed details | 1-3 minutes | Candidate confirms the profile is usable |
+| 5 | Start the interview | Opens the interview workspace and begins the introduction phase | Less than 1 minute | Interview session begins |
+| 6 | Answer introduction prompts | Assesses communication style and gathers context without scoring heavily | 3-5 minutes | Warm-up transcript and candidate context |
+| 7 | Answer strongest-project deep-dive questions | Uses Socratic follow-ups on architecture, methods, trade-offs, failure modes, and production thinking | 10-15 minutes | Phase 2 evidence and score inputs |
+| 8 | Answer secondary project / experience questions | Tests breadth, consistency, and transfer across other resume items | 8-12 minutes | Phase 3 evidence and score inputs |
+| 9 | Answer factual ML questions | Retrieves role/domain-relevant factual questions and uses generated fallbacks when needed | 8-12 minutes | Phase 4 correctness evidence |
+| 10 | Answer behavioral questions | Assesses ownership, ambiguity handling, teamwork, and maturity | 5-8 minutes | Phase 5 behavioral evidence |
+| 11 | End the interview and open review | Computes phase scores, weighted overall score, strengths, weaknesses, suggestions, and role-alignment notes | 1-3 minutes | Final feedback dashboard |
+| 12 | Optional: delete interview data | Deletes the active session data and clears matching browser-side session/history artifacts | Less than 1 minute | Session data removed from the active product flow |
+
+### 7.2 Phase Timing Guide
+
+| Interview phase | Target duration | Product intent | Scoring role |
+| --- | ---: | --- | --- |
+| Phase 1: Introduction | 3-5 minutes | Warm-up, communication baseline, candidate context | Qualitative only in V1 |
+| Phase 2: Strongest project deep dive | 10-15 minutes | Test depth, ownership, technical reasoning, trade-offs, failure handling | 30% |
+| Phase 3: Other projects / research / internship | 8-12 minutes | Test breadth, consistency, and transfer of skills | 25% |
+| Phase 4: Factual ML questions | 8-12 minutes | Validate role-relevant technical correctness | 25% |
+| Phase 5: Behavioral round | 5-8 minutes | Assess maturity, collaboration, ownership, and communication | 20% |
+| Final review | 1-3 minutes | Present actionable performance summary | Aggregates weighted score and qualitative feedback |
 
 ## 8. Interview Design
 
